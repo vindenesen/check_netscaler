@@ -6,7 +6,7 @@ Currently the plugin has three different modes:
 
 - **check_state:** check the current service state of vservers, servicegroups and services
 
-- **check_threshold** check system values like cpu/disk/ram usage by a threshold
+- **check_threshold:** check system values like cpu/disk/ram usage by a threshold
 
 - **check_string:** check system values to match for a specific string
 
