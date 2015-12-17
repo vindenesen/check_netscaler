@@ -10,7 +10,7 @@ Currently the plugin has three different modes:
 
 - **check_string:** check system values to match for a specific string
 
-This plugin also works with VPX, MPX and SDX NetScaler Appliances. The api responses differ by appliance type and your installed license.
+This plugin works with VPX, MPX and SDX NetScaler Appliances. The api responses differ by appliance type and your installed license.
 
 The plugin is in alpha state and feedback and feature requests are appreciated. Performance data and grahing will be shipped in a later version of this plugin.
 
