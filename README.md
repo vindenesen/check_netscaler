@@ -1,4 +1,4 @@
-# check_netscaler
+# NetScaler Nagios Plugin (check_netscaler)
 
 A Nagios Plugin written for the Citrix NetScaler Application Delivery Controller. It's based on Perl and using the the NITRO REST API. No need for SNMP.
 
