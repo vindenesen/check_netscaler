@@ -5,8 +5,8 @@
 # Nagios Check Script Citrix NetScaler 
 # Simon Lauger <simon@lauger.name>
 #
-# http://blog.simlau.net
 # https://github.com/slauger/check_netscaler
+# http://blog.simlau.net/
 #
 # Copyright (c) 2015, Simon Lauger
 # All rights reserved.
@@ -71,7 +71,6 @@ Perl NITRO API samples)
 This Plugin is written and maintained by Simon Lauger.
 
 GitHub: https://github.com/slauger/check_netscaler
-
 Offical Blog: http://blog.simlau.net
 
 Usage Examples:
