@@ -1,12 +1,31 @@
 # check_netscaler
 
-A Nagios Plugin written in Perl for the Citrix NetScaler. It's based on the the NITRO API.
+A Nagios Plugin written for the Citrix NetScaler Application Delivery Controller. It's based on Perl and using the the NITRO REST API. No need for SNMP.
+
+Currently the plugin has three different modes:
+
+- check_state
+  Check the current service state of vservers, servicegroups and services
+
+- check_threshold
+  Check system values like cpu/disk/ram usage by a threshold
+
+- check_string
+  Check system values to match for a specific string
+
+This plugin also works with VPX, MPX and SDX NetScaler Appliances. The api responses differ by appliance type and your installed license.
+
+The plugin is in alpha state and feedback and feature requests are appreciated. Performance data and grahing will be shipped in a later version of this plugin.
+
+The Nitro.pm by Citrix (released under the Apache License 2.0) is required for using this plugin.
 
 # Installation
 
-On a CentOS machine execute the following commands to install all dependencies (LWP, JSON):
+On a CentOS machine execute the following commands to install all Perl dependencies (Nagios::Plugin, LWP, JSON):
 
     yum install perl-libwww-perl perl-JSON perl-Nagios-Plugin
+
+Copy the Nitro.pm in the same directory as the check_netscaler.pl file or copy it to you @INC (include path).
 
 # Usage Examples
 
