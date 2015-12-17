@@ -4,14 +4,11 @@ A Nagios Plugin written for the Citrix NetScaler Application Delivery Controller
 
 Currently the plugin has three different modes:
 
-- check_state
-  Check the current service state of vservers, servicegroups and services
+- **check_state:** check the current service state of vservers, servicegroups and services
 
-- check_threshold
-  Check system values like cpu/disk/ram usage by a threshold
+- **check_threshold** check system values like cpu/disk/ram usage by a threshold
 
-- check_string
-  Check system values to match for a specific string
+- **check_string:** check system values to match for a specific string
 
 This plugin also works with VPX, MPX and SDX NetScaler Appliances. The api responses differ by appliance type and your installed license.
 
