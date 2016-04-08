@@ -18,11 +18,16 @@ The Nitro.pm by Citrix (released under the Apache License 2.0) is required for u
 
 # Installation
 
-On a CentOS machine execute the following commands to install all Perl dependencies (Nagios::Plugin, LWP, JSON):
+On a CentOS/RHEL machine execute the following commands to install all Perl dependencies (Nagios::Plugin, LWP, JSON):
 
     yum install perl-libwww-perl perl-JSON perl-Nagios-Plugin
 
 Copy the Nitro.pm in the same directory as the check_netscaler.pl file or copy it to you @INC (include path).
+
+# Known Issues
+
+- Error Handling/Execption Handling
+- Performance data not implemented yet
 
 # Usage Examples
 
@@ -53,3 +58,12 @@ Copy the Nitro.pm in the same directory as the check_netscaler.pl file or copy i
     NetScaler::HA::State
     ./check_netscaler.pl -H  192.168.100.100 -U nsroot -P nsroot -C check_string_not -I hanode -F hacurstate -w UP -c UP
 
+# API Documentation
+
+You will find a full documentation about the NITRO API on your NetScaler Appliance in the "Download" area.
+
+http://NSIP/nitro-rest.tgz (where NSIP is the IP address of your NetScaler appliance). 
+
+# Tested Firmware
+
+Tested with NetScaler 11 Build 64.34.
