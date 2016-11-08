@@ -41,7 +41,7 @@ use strict;
 my $plugin = Nagios::Plugin->new(
 	plugin		=> 'check_netscaler',
 	shortname	=> 'check_netscaler',
-	version		=> '0.1',
+	version		=> '0.1.1',
 	url		=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX)',
 	usage		=> "Usage: %s [ -v|--verbose ] [ -H <host> ] [ -U <username> ] [ -P <password> ] [ -t <timeout> ] -H <host> -C <command> -I <identifier> -F <filter>",
@@ -70,31 +70,31 @@ https://github.com/slauger/check_netscaler
 Usage Examples:
 
 NetScaler::VPNvServer::State 
-./check_netscaler.pl -H  192.168.100.100 -U nsroot -P nsroot -C check_vserver -I vpnvserver 
+./check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_vserver -I vpnvserver 
 
 NetScaler::LBvServer::State 
-./check_netscaler.pl -H  192.168.100.100 -U nsroot -P nsroot-C check_vserver -I lbvserver 
+./check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_vserver -I lbvserver 
 
 NetScaler::System::Memory 
-./check_netscaler.pl -H  192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F memusagepcnt -w 75 -c 80 
+./check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F memusagepcnt -w 75 -c 80 
 
 NetScaler::System::CPU 
-./check_netscaler.pl -H  192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F cpuusagepcnt -w 75 -c 80 
+./check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F cpuusagepcnt -w 75 -c 80 
 
 NetScaler::System::CPU::MGMT 
-./check_netscaler.pl -H  192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F mgmtcpuusagepcnt -w 75 -c 80 
+./check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F mgmtcpuusagepcnt -w 75 -c 80 
 
 NetScaler::System::Disk0 
-/check_netscaler.pl -H  192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F disk0perusage -w 75 -c 80 
+/check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F disk0perusage -w 75 -c 80 
 
 NetScaler::System::Disk1 
-/check_netscaler.pl -H  192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F disk1perusage -w 75 -c 80 
+/check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F disk1perusage -w 75 -c 80 
 
 NetScaler::HA::Status 
-/check_netscaler.pl -H  192.168.100.100 -U nsroot -P nsroot -C check_string_not -I hanode -F hacurstatus -w YES -c YES 
+/check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_string_not -I hanode -F hacurstatus -w YES -c YES 
 
 NetScaler::HA::State 
-./check_netscaler.pl -H  192.168.100.100 -U nsroot -P nsroot -C check_string_not -I hanode -F hacurstate -w UP -c UP 
+./check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_string_not -I hanode -F hacurstate -w UP -c UP 
 
 ");
 
