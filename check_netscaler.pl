@@ -259,16 +259,16 @@ sub check_vserver
 			$counter_unkown++;
 			$plugin->add_message(CRITICAL, $state->{name} . " UNKOWN;");				
 		}
-			
-		my ($code, $message) = $plugin->check_messages;
+	}		
+	my ($code, $message) = $plugin->check_messages;
 		
-		my $stats = "[" . $counter_up . " UP, " . 
-		                  $counter_down . " DOWN, " .
-				  $counter_oos . " OOS, " .
-				  $counter_unkown . " UNKOWN" . "]";
+	my $stats = "[" . $counter_up . " UP, " . 
+	                  $counter_down . " DOWN, " .
+			  $counter_oos . " OOS, " .
+			  $counter_unkown . " UNKOWN" . "]";
 				
-		$plugin->nagios_exit($code, $message . " " . $stats);
-	}
+	$plugin->nagios_exit($code, $message . " " . $stats);
+
 }
 
 sub check_string
