@@ -295,7 +295,6 @@ sub check_vserver
                 max       => undef,
                 threshold => undef,
         );
-
 		
 	$plugin->nagios_exit($code, $message . " " . $stats);
 
@@ -390,6 +389,14 @@ sub check_threshold_above
 		print Dumper($values);
 	}
 
+        $plugin->add_perfdata(
+                label     => $plugin->opts->identifier . "::" . $plugin->opts->filter,
+                value     => $values->{$plugin->opts->filter},
+                min       => 0,
+                max       => undef,
+                threshold => undef,
+        );
+
 	if ($values->{$plugin->opts->filter} >= $plugin->opts->critical) {
 		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " is above threshold [current: " . $values->{$plugin->opts->filter} . "; critical: " . $plugin->opts->critical . "]", CRITICAL);
 	} elsif ($values->{$plugin->opts->filter} >= $plugin->opts->warning) {
@@ -421,6 +428,14 @@ sub check_threshold_below
 		print Dumper($plugin->opts->critical);
 		print Dumper($values);
 	}
+
+        $plugin->add_perfdata(
+                label     => $plugin->opts->identifier . "::" . $plugin->opts->filter,
+                value     => $values->{$plugin->opts->filter},
+                min       => 0,
+                max       => undef,
+                threshold => undef,
+        );
 
 	if ($values->{$plugin->opts->filter} <= $plugin->opts->critical) {
 		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " is below threshold [current: " . $values->{$plugin->opts->filter} . "; critical: " . $plugin->opts->critical . "]", CRITICAL);
