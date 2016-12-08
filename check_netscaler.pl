@@ -266,7 +266,37 @@ sub check_vserver
 	                  $counter_down . " DOWN, " .
 			  $counter_oos . " OOS, " .
 			  $counter_unkown . " UNKOWN" . "]";
-				
+		
+	$plugin->add_perfdata(
+		label     => "UP",
+		value     => $counter_up,
+		min       => 0,
+		max       => undef,
+		threshold => undef,
+   	);
+        $plugin->add_perfdata(
+                label     => "DOWN",
+                value     => $counter_down,
+                min       => 0,
+                max       => undef,
+                threshold => undef,
+        );
+        $plugin->add_perfdata(
+                label     => "OOS",
+                value     => $counter_oos,
+                min       => 0,
+                max       => undef,
+                threshold => undef,
+        );
+        $plugin->add_perfdata(
+                label     => "UNKOWN",
+                value     => $counter_unkown,
+                min       => 0,
+                max       => undef,
+                threshold => undef,
+        );
+
+		
 	$plugin->nagios_exit($code, $message . " " . $stats);
 
 }
