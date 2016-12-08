@@ -27,7 +27,6 @@ Copy the Nitro.pm in the same directory as the check_netscaler.pl file or copy i
 # Known Issues
 
 - Error Handling/Execption Handling
-- Performance data not implemented yet
 
 # Usage Examples
 
