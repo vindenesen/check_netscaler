@@ -41,12 +41,11 @@ use strict;
 my $plugin = Nagios::Plugin->new(
 	plugin		=> 'check_netscaler',
 	shortname	=> 'check_netscaler',
-	version		=> '0.1.1',
+	version		=> '0.1.2',
 	url		=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX)',
-	usage		=> "Usage: %s [ -v|--verbose ] [ -H <host> ] [ -U <username> ] [ -P <password> ] [ -t <timeout> ] -H <host> -C <command> -I <identifier> -F <filter>",
-	license		=>
-"This nagios plugin is free software, and comes with ABSOLUTELY NO WARRANTY.
+	usage		=> "Usage: %s [ -v|--verbose ] [ -H <host> ] [ -U <username> ] [ -P <password> ] [ -t <timeout> ] -H <host> -C <command> [ -I <identifier> ] [ -F <filter> ]",
+	license		=> "This nagios plugin is free software, and comes with ABSOLUTELY NO WARRANTY.
 It may be used, redistributed and/or modified under the terms of the 3-Clause
 BSD License (see http://opensource.org/licenses/BSD-3-Clause).",
  	extra     => "
@@ -100,48 +99,56 @@ NetScaler::HA::State
 
 my @args = (
 	{
-		spec    => 'hostname|H=s',
-		usage   => '-H, --hostname=HOSTNAME',
-		desc    => 'Hostname/NSIP of the NetScaler appliance to connect to',
+		spec     => 'hostname|H=s',
+		usage    => '-H, --hostname=HOSTNAME',
+		desc     => 'Hostname/NSIP of the NetScaler appliance to connect to',
+		required => 1,
 	},
 	{
-		spec    => 'username|U=s',
-		usage   => '-U, --username=USERNAME',
-		desc    => 'Username to log into box as',
-		default => 'nsroot',
+		spec     => 'username|U=s',
+		usage    => '-U, --username=USERNAME',
+		desc     => 'Username to log into box as',
+		default  => 'nsroot',
+		required => 0,
 	},
 	{
-		spec    => 'password|P=s',
-		usage   => '-P, --password=PASSWORD',
-		desc    => 'Password for login username',
-		default => 'nsroot',
+		spec     => 'password|P=s',
+		usage    => '-P, --password=PASSWORD',
+		desc     => 'Password for login username',
+		default  => 'nsroot',
+		required => 0,
 	},
 	{
-		spec	=> 'command|C=s',
-		usage	=> '-C, --command=COMMAND',
-		desc	=> 'Check to be executed on the appliance',
+		spec	 => 'command|C=s',
+		usage	 => '-C, --command=COMMAND',
+		desc	 => 'Check to be executed on the appliance',
+		required => 1,
 	},
 	{
-		spec	=> 'identifier|I=s',
-		usage	=> '-I, --identifier=SUBCOMMAND',
-		desc	=> 'Identifier for command',
-		default => '',
+		spec	 => 'identifier|I=s',
+		usage	 => '-I, --identifier=SUBCOMMAND',
+		desc	 => 'Identifier for command',
+		default  => '',
+		required => 0,
 	},
 	{
-		spec	=> 'filter|F=s',
-		usage	=> '-F, --filter=FILTER',
-		desc	=> 'Filter for current command (might be a object name)',
-		default => '',
+		spec	 => 'filter|F=s',
+		usage	 => '-F, --filter=FILTER',
+		desc	 => 'Filter for current command (might be a object name)',
+		default  => '',
+		required => 0,
 	},
 	{
 		spec	=> 'warning|w=s',
 		usage	=> '-w, --warning=INTEGER',
 		desc	=> 'Value for warning',
+		required => 0,
 	},
 	{
-		spec	=> 'critical|c=s',
-		usage	=> '-c, --critical=INTEGER',
-		desc	=> 'Value for critical',
+		spec	 => 'critical|c=s',
+		usage	 => '-c, --critical=INTEGER',
+		desc	 => 'Value for critical',
+		required => 0,
 	},
 );
 
@@ -154,7 +161,7 @@ $plugin->getopts;
 if (!defined $plugin->opts->hostname) {
 	$plugin->nagios_die('missing hostname argument', CRITICAL);
 }
- 
+
 my $session = Nitro::_login($plugin->opts->hostname, $plugin->opts->username, $plugin->opts->password);
 
 if ($session->{errorcode} != 0 || !($session->{sessionid})) {
@@ -186,8 +193,10 @@ sub add_arg
 	my $plugin = shift;
 	my $arg    = shift;
 
-	my $spec = $arg->{'spec'};
-	my $help = $arg->{'usage'};
+	my $spec     = $arg->{'spec'};
+	my $help     = $arg->{'usage'};
+	my $default  = $arg->{'default'};
+	my $required = $arg->{'required'};
 
 	if (defined $arg->{'desc'}) {
 		my @desc;
@@ -212,8 +221,10 @@ sub add_arg
 	}
 
 	$plugin->add_arg(
-		spec => $spec,
-		help => $help,
+		spec     => $spec,
+		help     => $help,
+		default  => $default,
+		required => $required,
 	);
 }
 
