@@ -180,6 +180,8 @@ if ($plugin->opts->command eq 'check_vserver') {
 	check_string_not();
 } elsif ($plugin->opts->command eq 'dump_stats') {
 	dump_stats();
+} elsif ($plugin->opts->command eq 'dump_conf') {
+	dump_conf();
 } elsif ($plugin->opts->command eq 'dump_vserver') {
 	dump_vserver();
 } else {
@@ -464,6 +466,15 @@ sub dump_stats
                 $plugin->nagios_die($values->{message}, CRITICAL);
         }
 	print Dumper($values);
+}
+
+sub dump_conf
+{
+        my $values = Nitro::_get($session, $plugin->opts->identifier, $plugin->opts->filter);
+        if ($values->{errorcode} != 0) {
+                $plugin->nagios_die($values->{message}, CRITICAL);
+        }
+        print Dumper($values);
 }
 
 sub dump_vserver
