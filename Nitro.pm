@@ -22,6 +22,7 @@ use LWP;
 use Carp;
 use JSON;
 use URI::Escape;
+use Data::Dumper;
 
 # Login method : Used to login to netscaler and get session
 # Arguments : ipaddress, username, password (of netscaler)
@@ -67,7 +68,7 @@ sub _login {
 	my $response = $nitro_useragent->request($request);
 	my $session = undef;
 	if (HTTP::Status::is_error($response->code)) {
-		$session = JSON->new->allow_blessed->convert_blessed->decode($response->content);
+		$session = JSON->new->allow_blessed->convert_blessed->decode($response->content);	
 	} else {
 		my $cookie = $response->header('Set-Cookie');
 		if ($cookie && $cookie =~ /NITRO_AUTH_TOKEN=(.*);/) {
