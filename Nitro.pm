@@ -22,12 +22,13 @@ use LWP;
 use Carp;
 use JSON;
 use URI::Escape;
+use Dumper;
 
 # Login method : Used to login to netscaler and get session
 # Arguments : ipaddress, username, password (of netscaler)
 sub _login {
 
-	my ($ipaddress,$username,$password) = @_ ;
+	my ($ipaddress,$username,$password,$ssl) = @_ ;
 
 	if (!$ipaddress || $ipaddress eq "") {
 		Carp::confess "Error : IP Address should not be null";
@@ -38,13 +39,22 @@ sub _login {
 	if (!$password || $password eq "") {
 		Carp::confess "Error : Password should not be null";
 	}
+	if ($ssl eq "") {
+		Carp::confess "Error : SSL should not be null";
+	}
 	my $obj = undef;
         $obj->{username} = $username;
 	$obj->{password} = $password;
+#	if ($ssl) {
+#		$protocol = 'https';
+	#} else {
+	#	$protocol = 'http';
+	#}
+	$protocol= 'https';
 	my $payload = JSON->new->allow_blessed->convert_blessed->encode($obj);
 	$payload = '{"login" :'.$payload."}";
 
-	my $url = "http://$ipaddress/nitro/v1/config/login";
+	my $url = $protocol . "://$ipaddress/nitro/v1/config/login";
 	my $contenttype = "application/vnd.com.citrix.netscaler.login+json";
 
 	my $nitro_useragent = LWP::UserAgent->new;
@@ -65,6 +75,7 @@ sub _login {
 		$session->{message} = "Done";
 	}
 	$session->{ns} = $ipaddress;
+	$session->{protocol} = $protocol;
 	$session->{username} = $username;
 	$session->{password} = $password;
 	return $session;
@@ -92,7 +103,7 @@ sub _post {
     my $payload = JSON->new->allow_blessed->convert_blessed->encode($object);
     $payload = '{"'.$objecttype.'" :'.$payload."}";
 
-	my $url = "http://$session->{ns}/nitro/v1/config/".$objecttype;
+	my $url = $session->{protocol} + "://$session->{ns}/nitro/v1/config/".$objecttype;
 	if ($operation && $operation ne "add") {
 		$url  = $url. "?action=".$operation;
 	}
@@ -130,7 +141,7 @@ sub _get {
 		Carp::confess "Error : Object type should not be null";
 	}
 
-	my $url = "http://$session->{ns}/nitro/v1/config/".$objecttype;
+	my $url = $session->{protocol} . "://$session->{ns}/nitro/v1/config/".$objecttype;
 	if ($objectname && $objectname ne "") {
 		$url  = $url."/".uri_escape(uri_escape($objectname));
 	}
@@ -165,7 +176,7 @@ sub _get_stats {
 		Carp::confess "Error : Object type should not be null";
 	}
 
-	my $url = "http://$session->{ns}/nitro/v1/stat/".$objecttype;
+	my $url = $session->{protocol} . "://$session->{ns}/nitro/v1/stat/".$objecttype;
 	if ($objectname && $objectname ne "") {
 		$url  = $url. "/".uri_escape(uri_escape($objectname));
 	}
@@ -203,7 +214,7 @@ sub _put
 	my $payload = JSON->new->allow_blessed->convert_blessed->encode($object);
         $payload = '{"'.$objecttype.'" :'.$payload."}";
 
-	my $url = "http://$session->{ns}/nitro/v1/config/".$objecttype. "/".uri_escape(uri_escape($objectname));
+	my $url = $session->{protocol} . "://$session->{ns}/nitro/v1/config/".$objecttype. "/".uri_escape(uri_escape($objectname));
 	my $contenttype = "application/vnd.com.citrix.netscaler.".$objecttype."+json";
 
 	my $nitro_useragent = LWP::UserAgent->new;
@@ -241,7 +252,7 @@ sub _delete {
 		Carp::confess "Error : Object should not be null";
 	}
 
-        my $url = "http://$session->{ns}/nitro/v1/config/$objecttype";
+        my $url = $session->{protocol} . "://$session->{ns}/nitro/v1/config/$objecttype";
 	if (ref($object) eq 'HASH') {
 		$url = $url."?args=";
 		while ((my $key, my $value) = each %{$object}) {
@@ -283,7 +294,7 @@ sub _logout {
 
 	my $payload = '{"logout" :{}}';
 
-	my $url = "http://$session->{ns}/nitro/v1/config/logout";
+	my $url = $session->{protocol} . "://$session->{ns}/nitro/v1/config/logout";
 	my $contenttype = "application/vnd.com.citrix.netscaler.logout+json";
 
 	my $nitro_useragent = LWP::UserAgent->new;

@@ -81,6 +81,13 @@ my @args = (
 		required => 0,
 	},
 	{
+		spec     => 'ssl|s=s',
+		usage    => '-s, --ssl',
+		desc     => 'Establish connection to NetScaler using HTTPS',
+		default  => 0,
+		required => 0,
+	},
+	{
 		spec     => 'password|P=s',
 		usage    => '-P, --password=PASSWORD',
 		desc     => 'Password for login username',
@@ -130,7 +137,7 @@ if (!defined $plugin->opts->hostname) {
 	$plugin->nagios_die('missing hostname argument', CRITICAL);
 }
 
-my $session = Nitro::_login($plugin->opts->hostname, $plugin->opts->username, $plugin->opts->password);
+my $session = Nitro::_login($plugin->opts->hostname, $plugin->opts->username, $plugin->opts->password, $plugin->opts->ssl);
 
 if ($session->{errorcode} != 0 || !($session->{sessionid})) {
 	$plugin->die("ERROR: " . $session->{message});
@@ -364,6 +371,7 @@ sub check_threshold_above
 	}
 
 	my $values = Nitro::_get_stats($session, $plugin->opts->identifier);
+
 	if ($values->{errorcode} != 0) {
 		$plugin->nagios_die($values->{message}, CRITICAL);
 	}
