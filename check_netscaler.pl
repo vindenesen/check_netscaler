@@ -70,7 +70,7 @@ my @args = (
 	{
 		spec     => 'hostname|H=s',
 		usage    => '-H, --hostname=HOSTNAME',
-		desc     => 'Hostname/NSIP of the NetScaler appliance to connect to',
+		desc     => 'Hostname of the NetScaler appliance to connect to',
 		required => 1,
 	},
 	{
@@ -84,7 +84,7 @@ my @args = (
 		spec     => 'ssl|s=s',
 		usage    => '-s, --ssl',
 		desc     => 'Establish connection to NetScaler using HTTPS',
-		default  => 0,
+		default  => 'false',
 		required => 0,
 	},
 	{

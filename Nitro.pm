@@ -22,7 +22,6 @@ use LWP;
 use Carp;
 use JSON;
 use URI::Escape;
-use Dumper;
 
 # Login method : Used to login to netscaler and get session
 # Arguments : ipaddress, username, password (of netscaler)
@@ -39,18 +38,21 @@ sub _login {
 	if (!$password || $password eq "") {
 		Carp::confess "Error : Password should not be null";
 	}
-	if ($ssl eq "") {
+	if (!$ssl || $ssl eq "") {
 		Carp::confess "Error : SSL should not be null";
 	}
+
 	my $obj = undef;
         $obj->{username} = $username;
 	$obj->{password} = $password;
-#	if ($ssl) {
-#		$protocol = 'https';
-	#} else {
-	#	$protocol = 'http';
-	#}
-	$protocol= 'https';
+
+	my $protocol = undef;
+	if ($ssl) {
+		$protocol = 'https';
+	} else {
+		$protocol = 'http';
+	}
+
 	my $payload = JSON->new->allow_blessed->convert_blessed->encode($obj);
 	$payload = '{"login" :'.$payload."}";
 
