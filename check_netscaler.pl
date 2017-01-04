@@ -178,6 +178,8 @@ if ($plugin->opts->command eq 'check_vserver') {
 	check_string();
 } elsif ($plugin->opts->command eq 'check_string_not') {
 	check_string_not();
+} elsif ($plugin->opts->command eq 'check_sslcert') {
+	check_sslcert();
 } elsif ($plugin->opts->command eq 'dump_stats') {
 	dump_stats();
 } elsif ($plugin->opts->command eq 'dump_conf') {
@@ -457,6 +459,34 @@ sub check_threshold_below
 	} else {
 		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " [".$values->{$plugin->opts->filter}."]", OK);
 	}
+}
+
+sub check_sslcert
+{
+        my $state = Nitro::_get($session, $plugin->opts->identifier, $plugin->opts->filter);
+        if ($state->{errorcode} != 0) {
+                $plugin->nagios_die($state->{message}, CRITICAL);
+        }
+
+        if ($plugin->opts->verbose) {
+                print Dumper($state);
+        }
+
+        $state = $state->{$plugin->opts->identifier};
+
+        foreach $state (@{$state}) {
+                if ($state->{daystoexpiration} <= $plugin->opts->critical) {
+                        $plugin->add_message(CRITICAL, $state->{certkey} . " expires in " . $state->{daystoexpiration} . " days;");
+		} elsif ($state->{daystoexpiration} <= $plugin->opts->warning) {
+                        $plugin->add_message(WARNING, $state->{certkey} . " expires in " . $state->{daystoexpiration} . " days;");
+                } else {
+                        # OK, write some stats...
+                }
+        }
+
+        my ($code, $message) = $plugin->check_messages;
+
+	$plugin->nagios_exit($code, $message);
 }
 
 sub dump_stats
