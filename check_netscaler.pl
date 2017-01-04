@@ -463,6 +463,10 @@ sub check_threshold_below
 
 sub check_sslcert
 {
+        if (!defined $plugin->opts->warning || !defined $plugin->opts->critical) {
+                $plugin->nagios_die('command requires parameter for warning and critical', CRITICAL);
+        }
+
         my $state = Nitro::_get($session, $plugin->opts->identifier, $plugin->opts->filter);
         if ($state->{errorcode} != 0) {
                 $plugin->nagios_die($state->{message}, CRITICAL);
