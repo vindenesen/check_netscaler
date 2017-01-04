@@ -35,7 +35,7 @@ Copy the Nitro.pm in the same directory as the check_netscaler.pl file or copy i
     ./check_netscaler.pl -H  192.168.100.100 -C check_vserver -I vpnvserver
 
     NetScaler::LBvServer::State
-    ./check_netscaler.pl -H  192.168.100.100 -U nsroot -P nsroot-C check_vserver -I lbvserver
+    ./check_netscaler.pl -H  192.168.100.100 -C check_vserver -I lbvserver
 
     NetScaler::System::Memory
     ./check_netscaler.pl -H  192.168.100.100 -C check_threshold_above -I system -F memusagepcnt -w 75 -c 80
