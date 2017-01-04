@@ -64,38 +64,7 @@ Perl NITRO API samples)
 
 This Plugin is written and maintained by Simon Lauger.
 
-https://github.com/slauger/check_netscaler
-
-Usage Examples:
-
-NetScaler::VPNvServer::State 
-./check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_vserver -I vpnvserver 
-
-NetScaler::LBvServer::State 
-./check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_vserver -I lbvserver 
-
-NetScaler::System::Memory 
-./check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F memusagepcnt -w 75 -c 80 
-
-NetScaler::System::CPU 
-./check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F cpuusagepcnt -w 75 -c 80 
-
-NetScaler::System::CPU::MGMT 
-./check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F mgmtcpuusagepcnt -w 75 -c 80 
-
-NetScaler::System::Disk0 
-/check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F disk0perusage -w 75 -c 80 
-
-NetScaler::System::Disk1 
-/check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_threshold_above -I system -F disk1perusage -w 75 -c 80 
-
-NetScaler::HA::Status 
-/check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_string_not -I hanode -F hacurstatus -w YES -c YES 
-
-NetScaler::HA::State 
-./check_netscaler.pl -H 192.168.100.100 -U nsroot -P nsroot -C check_string_not -I hanode -F hacurstate -w UP -c UP 
-
-");
+See https://github.com/slauger/check_netscaler for further information.");
 
 my @args = (
 	{
@@ -128,7 +97,6 @@ my @args = (
 		spec	 => 'identifier|I=s',
 		usage	 => '-I, --identifier=SUBCOMMAND',
 		desc	 => 'Identifier for command',
-		default  => '',
 		required => 0,
 	},
 	{
@@ -234,6 +202,10 @@ sub add_arg
 
 sub check_vserver
 {
+        if (!defined $plugin->opts->identifier) {
+                $plugin->nagios_die('command requires identifier parameter', CRITICAL);
+        }
+
 	my $state = Nitro::_get_stats($session, $plugin->opts->identifier, $plugin->opts->filter);
 
 	my $state_up     = '';
