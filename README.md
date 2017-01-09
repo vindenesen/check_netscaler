@@ -4,9 +4,6 @@ A Nagios Plugin written for the Citrix NetScaler Application Delivery Controller
 
 Currently the plugin has the following subcommands:
 
-- **check_state:** check the current service state of vservers, servicegroups and services
-- **check_threshold:** check system values like cpu/disk/ram usage by a threshold
-- **check_string:** check system values to match for a specific string
 - **check_vserver:** check the current service state of vservers (e.g. lb, vpn, gslb) and service groups
 - **check_string, check_string_not:** check for a specific string in the api response (e.g. HA or cluster status)
 - **check_threshold_above, check_threshold_below:** check for a threshold (e.g. traffic limits, concurrent connections)
