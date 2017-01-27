@@ -24,6 +24,10 @@ On a CentOS/RHEL machine execute the following commands to install all Perl depe
 
     yum install perl-libwww-perl perl-JSON perl-Nagios-Plugin
 
+If you want to connect to your NetScaler with SSL/HTTPS you should also install the LWP HTTPS package.
+
+    yum install perl-LWP-Protocol-https
+
 Copy the Nitro.pm in the same directory as the check_netscaler.pl file or copy it to you @INC (include path).
 
 # Usage Examples

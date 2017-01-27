@@ -48,7 +48,7 @@ sub _login {
 	$obj->{password} = $password;
 
 	my $protocol = undef;
-	if ($ssl) {
+	if ($ssl eq "true") {
 		$protocol = 'https';
 	} else {
 		$protocol = 'http';
@@ -60,7 +60,15 @@ sub _login {
 	my $url = $protocol . "://$ipaddress/nitro/v1/config/login";
 	my $contenttype = "application/vnd.com.citrix.netscaler.login+json";
 
-	my $nitro_useragent = LWP::UserAgent->new;
+	my $nitro_useragent = LWP::UserAgent->new(
+		env_proxy => 1, 
+		keep_alive => 1, 
+		timeout => 300, 
+		ssl_opts => { 
+			verify_hostname => 0, 
+			SSL_verify_mode => 0
+		},
+	);
 	my $request = HTTP::Request->new( POST => $url );
 	$request->header( 'Content-Type', $contenttype );
 	$request->content($payload);
@@ -68,6 +76,7 @@ sub _login {
 	my $response = $nitro_useragent->request($request);
 	my $session = undef;
 	if (HTTP::Status::is_error($response->code)) {
+		print $response->content;
 		$session = JSON->new->allow_blessed->convert_blessed->decode($response->content);	
 	} else {
 		my $cookie = $response->header('Set-Cookie');
@@ -103,8 +112,8 @@ sub _post {
 		Carp::confess "Error : Object should not be null";
 	}
 
-    my $payload = JSON->new->allow_blessed->convert_blessed->encode($object);
-    $payload = '{"'.$objecttype.'" :'.$payload."}";
+	my $payload = JSON->new->allow_blessed->convert_blessed->encode($object);
+	$payload = '{"'.$objecttype.'" :'.$payload."}";
 
 	my $url = $session->{protocol} + "://$session->{ns}/nitro/v1/config/".$objecttype;
 	if ($operation && $operation ne "add") {
@@ -112,7 +121,15 @@ sub _post {
 	}
 	my $contenttype = "application/vnd.com.citrix.netscaler.".$objecttype."+json";
 
-	my $nitro_useragent = LWP::UserAgent->new;
+	my $nitro_useragent = LWP::UserAgent->new(
+                env_proxy => 1,
+                keep_alive => 1,
+                timeout => 300,
+                ssl_opts => {
+                        verify_hostname => 0,
+                        SSL_verify_mode => 0
+                },
+        );
 	my $request = HTTP::Request->new(POST => $url);
 	$request->header('Content-Type', $contenttype);
 	$request->header('Set-Cookie', "NITRO_AUTH_TOKEN=".$session->{sessionid});
@@ -145,6 +162,7 @@ sub _get {
 	}
 
 	my $url = $session->{protocol} . "://$session->{ns}/nitro/v1/config/".$objecttype;
+
 	if ($objectname && $objectname ne "") {
 		$url  = $url."/".uri_escape(uri_escape($objectname));
 	}
@@ -153,7 +171,15 @@ sub _get {
 	}
 	my $contenttype = "application/vnd.com.citrix.netscaler.".$objecttype."+json";
 
-	my $nitro_useragent = LWP::UserAgent->new;
+	my $nitro_useragent = LWP::UserAgent->new(
+                env_proxy => 1,
+                keep_alive => 1,
+                timeout => 300,
+                ssl_opts => {
+                        verify_hostname => 0,
+                        SSL_verify_mode => 0
+                },
+        );
 	my $request = HTTP::Request->new(GET => $url);
 	$request->header('Content-Type', $contenttype);
 	$request->header('Set-Cookie', "NITRO_AUTH_TOKEN=".$session->{sessionid});
@@ -185,7 +211,15 @@ sub _get_stats {
 	}
 	my $contenttype = "application/vnd.com.citrix.netscaler.".$objecttype."+json";
 
-	my $nitro_useragent = LWP::UserAgent->new;
+	my $nitro_useragent = LWP::UserAgent->new(
+                env_proxy => 1,
+                keep_alive => 1,
+                timeout => 300,
+                ssl_opts => {
+                        verify_hostname => 0,
+                        SSL_verify_mode => 0
+                },
+        );
 	my $request = HTTP::Request->new(GET => $url);
 	$request->header('Content-Type', $contenttype);
 	$request->header('Set-Cookie', "NITRO_AUTH_TOKEN=".$session->{sessionid});
@@ -220,7 +254,15 @@ sub _put
 	my $url = $session->{protocol} . "://$session->{ns}/nitro/v1/config/".$objecttype. "/".uri_escape(uri_escape($objectname));
 	my $contenttype = "application/vnd.com.citrix.netscaler.".$objecttype."+json";
 
-	my $nitro_useragent = LWP::UserAgent->new;
+	my $nitro_useragent = LWP::UserAgent->new(
+                env_proxy => 1,
+                keep_alive => 1,
+                timeout => 300,
+                ssl_opts => {
+                        verify_hostname => 0,
+                        SSL_verify_mode => 0
+                },
+        );
 	my $request = HTTP::Request->new(PUT => $url);
 	$request->header('Content-Type', $contenttype);
 	$request->header('Set-Cookie', "NITRO_AUTH_TOKEN=".$session->{sessionid});
@@ -267,7 +309,15 @@ sub _delete {
 	}
 	my $contenttype = "application/vnd.com.citrix.netscaler.".$objecttype."+json";
 
-	my $nitro_useragent = LWP::UserAgent->new;
+	my $nitro_useragent = LWP::UserAgent->new(
+                env_proxy => 1,
+                keep_alive => 1,
+                timeout => 300,
+                ssl_opts => {
+                        verify_hostname => 0,
+                        SSL_verify_mode => 0
+                },
+        );
 	my $request = HTTP::Request->new(DELETE => $url);
 	$request->header('Content-Type', $contenttype);
 	$request->header('Set-Cookie', "NITRO_AUTH_TOKEN=".$session->{sessionid});
@@ -300,7 +350,15 @@ sub _logout {
 	my $url = $session->{protocol} . "://$session->{ns}/nitro/v1/config/logout";
 	my $contenttype = "application/vnd.com.citrix.netscaler.logout+json";
 
-	my $nitro_useragent = LWP::UserAgent->new;
+	my $nitro_useragent = LWP::UserAgent->new(
+                env_proxy => 1,
+                keep_alive => 1,
+                timeout => 300,
+                ssl_opts => {
+                        verify_hostname => 0,
+                        SSL_verify_mode => 0
+                },
+        );
 	my $request = HTTP::Request->new(POST => $url);
 	$request->header('Content-Type', $contenttype);
 	$request->header('Set-Cookie', "NITRO_AUTH_TOKEN=".$session->{sessionid});
