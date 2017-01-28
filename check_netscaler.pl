@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-################################################################################
+##############################################################################
 # check_netscaler
 # 
 # Nagios Check Script Citrix NetScaler 
@@ -30,7 +30,7 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-################################################################################
+###############################################################################
 
 use Nitro;
 use Nagios::Plugin;
@@ -131,10 +131,6 @@ foreach my $arg (@args) {
 
 $plugin->getopts;
 
-if (!defined $plugin->opts->hostname) {
-	$plugin->nagios_die('missing hostname argument', CRITICAL);
-}
-
 my $session = Nitro::_login($plugin->opts->hostname, $plugin->opts->username, $plugin->opts->password, $plugin->opts->ssl);
 
 if ($session->{errorcode} != 0 || !($session->{sessionid})) {
@@ -160,6 +156,7 @@ if ($plugin->opts->command eq 'check_vserver') {
 } elsif ($plugin->opts->command eq 'dump_vserver') {
 	dump_vserver();
 } else {
+	my $result = Nitro::_logout($session);
 	$plugin->nagios_die('unkown argument for parameter -C (command)', CRITICAL);
 }
 
@@ -203,6 +200,114 @@ sub add_arg
 		default  => $default,
 		required => $required,
 	);
+}
+
+sub nitro_client {
+
+	my ($hostname, $username, $password, $ssl) = @_ ;
+
+	if (!$hostname || $hostname eq "") {
+		Carp::confess "Error : Object type should not be null";
+	}
+	
+	if (!$username || $username eq "") {
+		Carp::confess "Error : Object type should not be null";
+	}
+	
+	if (!$password || $password eq "") {
+		Carp::confess "Error : Object type should not be null";
+	}
+
+	if (!$ssl || $ssl eq "") {
+		Carp::confess "Error : Object type should not be null";
+	}
+
+	if ($ssl eq "true") {
+		my $baseurl = 'https://' . $hostname . "/nitro/v1";
+	} else {
+		my $baseurl = 'http://' . $hostname . "/nitro/v1";;
+	}
+	
+	#my $contenttype = "application/vnd.com.citrix.netscaler.%s+json";
+	
+	my $instance = LWP::UserAgent->new(
+		env_proxy => 1, 
+		keep_alive => 1, 
+		timeout => 300, 
+		ssl_opts => { 
+			verify_hostname => 0, 
+			SSL_verify_mode => 0
+		},
+	);
+	
+	my $session = undef;
+	
+	$session->{hostname}    = $hostname;
+	$session->{username}    = $username;
+	$session->{password}    = $password;
+	$session->{baseurl}     = $baseurl;
+	#$session->{contenttype} = $contenttype;
+	$session->{instance}    = $instance;
+	
+	return $session;
+}
+
+sub nitro_request
+{
+	my ($session, $requesttype, $objecttype, $objectname, $options) = @_ ;
+	
+	my $url = $session->{baseurl} . "/" $requesttype . "/" . $objecttype;
+	
+	if ($objectname && $objectname ne "") {
+		$url  = $url . "/" . uri_escape(uri_escape($objectname));
+	}
+	
+	if ($options && $options ne "") {
+		$url = $url . "?" . $options;
+	}
+	
+	my $request = HTTP::Request->new(GET => $url);
+	
+	$request->header('Content-Type', "application/vnd.com.citrix.netscaler.".$objecttype."+json"
+	$request->header('X-NITRO-USER', $session->{username});
+	$request->header('X-NITRO-PASS', $session->{username});
+	
+	my $response = $session->{instance}->request($request);
+	
+	if (HTTP::Status::is_error($response->code)) {
+			$plugin->nagios_die($response->content, CRITICAL);
+		}
+		#$response = JSON->new->allow_blessed->convert_blessed->decode($response->content);
+	} else {
+		$response->{errorcode} = 0;
+		$response->{message} = "Done";
+	}
+	return $response;
+}
+
+sub nitro_get
+{
+	my ($session, $objecttype, $object, $operation) = @_ ;	
+}
+
+sub nitro_get_stats
+{
+	my ($session, $objecttype, $object, $operation) = @_ ;	
+}
+
+sub nitro_post
+{
+	
+}
+
+sub nitro_put
+{
+	
+}
+
+sub nitro_delete
+{
+	
 }
 
 sub check_vserver
