@@ -32,11 +32,13 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-use Nitro;
-use Nagios::Plugin;
-use Data::Dumper;
-
 use strict;
+
+use LWP;
+use JSON;
+use URI::Escape;
+use Data::Dumper;
+use Nagios::Plugin;
 
 my $plugin = Nagios::Plugin->new(
 	plugin		=> 'check_netscaler',
@@ -131,11 +133,7 @@ foreach my $arg (@args) {
 
 $plugin->getopts;
 
-my $session = Nitro::_login($plugin->opts->hostname, $plugin->opts->username, $plugin->opts->password, $plugin->opts->ssl);
-
-if ($session->{errorcode} != 0 || !($session->{sessionid})) {
-	$plugin->die("ERROR: " . $session->{message});
-}
+my $session = nitro_client($plugin)
 
 if ($plugin->opts->command eq 'check_vserver') {
 	check_vserver();
@@ -156,11 +154,8 @@ if ($plugin->opts->command eq 'check_vserver') {
 } elsif ($plugin->opts->command eq 'dump_vserver') {
 	dump_vserver();
 } else {
-	my $result = Nitro::_logout($session);
-	$plugin->nagios_die('unkown argument for parameter -C (command)', CRITICAL);
+	$plugin->nagios_die('unkown command given', CRITICAL);
 }
-
-my $result = Nitro::_logout($session);
 
 sub add_arg
 {
@@ -204,31 +199,29 @@ sub add_arg
 
 sub nitro_client {
 
-	my ($hostname, $username, $password, $ssl) = @_ ;
+	my $plugin = shift;
 
-	if (!$hostname || $hostname eq "") {
+	if (!$plugin->opts->hostname || $plugin->opts->hostname eq "") {
 		Carp::confess "Error : Object type should not be null";
 	}
 	
-	if (!$username || $username eq "") {
+	if (!$plugin->opts->username || $plugin->opts->username eq "") {
 		Carp::confess "Error : Object type should not be null";
 	}
 	
-	if (!$password || $password eq "") {
+	if (!$plugin->opts->password || $plugin->opts->password eq "") {
 		Carp::confess "Error : Object type should not be null";
 	}
 
-	if (!$ssl || $ssl eq "") {
+	if (!$plugin->opts->ssl || $plugin->opts->ssl eq "") {
 		Carp::confess "Error : Object type should not be null";
 	}
 
-	if ($ssl eq "true") {
+	if ($plugin->opts->ssl eq "true") {
 		my $baseurl = 'https://' . $hostname . "/nitro/v1";
 	} else {
 		my $baseurl = 'http://' . $hostname . "/nitro/v1";;
 	}
-	
-	#my $contenttype = "application/vnd.com.citrix.netscaler.%s+json";
 	
 	my $instance = LWP::UserAgent->new(
 		env_proxy => 1, 
@@ -242,19 +235,15 @@ sub nitro_client {
 	
 	my $session = undef;
 	
-	$session->{hostname}    = $hostname;
-	$session->{username}    = $username;
-	$session->{password}    = $password;
-	$session->{baseurl}     = $baseurl;
-	#$session->{contenttype} = $contenttype;
-	$session->{instance}    = $instance;
+	$session->{baseurl}  = $baseurl;
+	$session->{instance} = $instance;
 	
 	return $session;
 }
 
 sub nitro_request
 {
-	my ($session, $requesttype, $objecttype, $objectname, $options) = @_ ;
+	my ($endpoint, $session, $objecttype, $objectname, $options) = @_ ;
 	
 	my $url = $session->{baseurl} . "/" $requesttype . "/" . $objecttype;
 	
@@ -275,39 +264,23 @@ sub nitro_request
 	my $response = $session->{instance}->request($request);
 	
 	if (HTTP::Status::is_error($response->code)) {
-			$plugin->nagios_die($response->content, CRITICAL);
-		}
+		$plugin->nagios_die($response->content, CRITICAL);
 		#$response = JSON->new->allow_blessed->convert_blessed->decode($response->content);
-	} else {
-		$response->{errorcode} = 0;
-		$response->{message} = "Done";
 	}
+	
 	return $response;
 }
 
 sub nitro_get
 {
-	my ($session, $objecttype, $object, $operation) = @_ ;	
+	my ($session, $objecttype, $object, $operation) = @_ ;
+	return nitro_request('config', $session, $objecttype, $objectname, $options) = @_ ;
 }
 
 sub nitro_get_stats
 {
-	my ($session, $objecttype, $object, $operation) = @_ ;	
-}
-
-sub nitro_post
-{
-	
-}
-
-sub nitro_put
-{
-	
-}
-
-sub nitro_delete
-{
-	
+	my ($session, $objecttype, $object, $operation) = @_ ;
+	return nitro_request('stats', $session, $objecttype, $objectname, $options) = @_ ;
 }
 
 sub check_vserver
