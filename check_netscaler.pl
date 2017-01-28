@@ -56,8 +56,6 @@ every important metric on the Citrix NetSaler.
 
 This plugin also works for MPX/SDX NetScaler Appliances.
 
-Performance data and grahing will be shipped in a later version of this plugin.
-
 The Nitro.pm by Citrix (releases under the Apache License 2.0) is required for using this 
 plugin. Use the Download tab in your NetScaler WebGUI for getting the Nitro.pm (part of the
 Perl NITRO API samples)
