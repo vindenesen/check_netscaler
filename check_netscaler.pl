@@ -261,6 +261,19 @@ sub check_vserver
 	if (!defined $plugin->opts->identifier) {
 		$plugin->nagios_die('command requires identifier parameter', CRITICAL);
 	}
+	
+	my %state = (
+		'up'     => '',
+		'down'   => '',
+		'unkown' => '',
+		'oos'    => '',
+	);
+	my %counter = (
+		'up'     => 0,
+		'down'   => 0,
+		'unkown' => 0,
+		'oos'    => 0,
+	);
 
 	my %params;
 	
@@ -268,81 +281,74 @@ sub check_vserver
 	$params{'objecttype'} = $plugin->opts->identifier;
 	$params{'objectname'} = $plugin->opts->filter;
 	$params{'options'}    = undef;
-	
+
 	my $response = nitro_client($plugin, \%params);
-
-	my $state_up     = '';
-	my $state_down   = '';
-	my $state_unkown = '';
-	my $state_oos    = '';
-
-	my $counter_up     = 0;
-	my $counter_down   = 0;
-	my $counter_unkown = 0;
-	my $counter_oos    = 0;
-
-	my $nitro_request = $response->{$plugin->opts->identifier};
-	foreach my $nitro_request (@{$nitro_request}) {
+	my $response = $response->{$plugin->opts->identifier};
+	
+	foreach my $response (@{$response}) {
 		# NetScaler API Bug: returns "ENABLED" instead of "UP" when requesting services/servicegroups
-		if ($nitro_request->{state} eq "UP" || $nitro_request->{state} eq "ENABLED") {
-			$counter_up++;
+		if ($response->{'state'} eq 'UP' || $response->{'state'} eq 'ENABLED') {
+			$counter->{'up'}++;
 		}
-		elsif ($nitro_request->{state} eq "DOWN") {
-			$counter_down++;
-			$plugin->add_message(CRITICAL, $nitro_request->{name} . " down");
+		elsif ($response->{'state'} eq 'DOWN') {
+			$counter->{'down'}++;
+			$plugin->add_message(CRITICAL, $response->{'name'} . " down");
 		}
-		elsif ($nitro_request->{state} eq "OUT OF SERVICE") {
-			$counter_oos++;
-			$plugin->add_message(CRITICAL, $nitro_request->{name} . " oos");
+		elsif ($nitro_request->{'state'} eq "OUT OF SERVICE") {
+			$counter->{'oos'}++;
+			$plugin->add_message(CRITICAL, $response->{'name'} . " oos");
 		}
-		elsif ($nitro_request->{state} eq "UNKOWN") {
-			$counter_unkown++;
-			$plugin->add_message(CRITICAL, $nitro_request->{name} . " unkown");				
+		elsif ($nitro_request->{'state'} eq "UNKOWN") {
+			$counter->{'unkown'}++;
+			$plugin->add_message(CRITICAL, $response->{'name'} . " unkown");				
 		} else {
-			$counter_unkown++;
-			$plugin->add_message(CRITICAL, $nitro_request->{name} . " unknown");				
+			$counter->{'unkown'}++;
+			$plugin->add_message(CRITICAL, $response->{'name'} . " unknown");				
 		}
 	}		
 	my ($code, $message) = $plugin->check_messages;
 		
-	my $stats = $counter_up . " up, " . $counter_down . " down, " . $counter_oos . " oos, " . $counter_unkown . " unkown";
+	my $stats = $counter_up . ' up, ' . $counter_down . ' down, ' . $counter_oos . ' oos, ' . $counter_unkown . ' unkown';
 	
 	$plugin->add_perfdata(
-		label     => "up",
-		value     => $counter_up,
+		label     => 'up',
+		value     => $counter->{'up'},
 		min       => 0,
 		max       => undef,
 		threshold => undef,
-   	);
-        $plugin->add_perfdata(
-                label     => "down",
-                value     => $counter_down,
-                min       => 0,
-                max       => undef,
-                threshold => undef,
-        );
-        $plugin->add_perfdata(
-                label     => "oos",
-                value     => $counter_oos,
-                min       => 0,
-                max       => undef,
-                threshold => undef,
-        );
-        $plugin->add_perfdata(
-                label     => "unkown",
-                value     => $counter_unkown,
-                min       => 0,
-                max       => undef,
-                threshold => undef,
-        );
-		
-	$plugin->nagios_exit($code, "NetScaler " . $plugin->opts->identifier . " " . $message . $stats);
+	);
+
+	$plugin->add_perfdata(
+		label     => 'down',
+		value     => $counter->{'down'},
+		min       => 0,
+		max       => undef,
+		threshold => undef,
+	);
+
+	$plugin->add_perfdata(
+		label     => 'oos',
+		value     => $counter->{'oos'},
+		min       => 0,
+		max       => undef,
+		threshold => undef,
+	);
+
+	$plugin->add_perfdata(
+		label     => 'unkown',
+		value     => $counter->{'unkown'},
+		min       => 0,
+		max       => undef,
+		threshold => undef,
+	);
+	
+	$plugin->nagios_exit($code, 'NetScaler' . $plugin->opts->identifier . ' ' . $message . $stats);
 
 }
 
 sub check_string
 {
-		my ($plugin, $session) = @_; 
+	my $plugin = shift;
 		
         if (!defined $plugin->opts->filter) {
                 $plugin->nagios_die('command requires parameter for filter', CRITICAL);
@@ -375,7 +381,7 @@ sub check_string
 
 sub check_string_not
 {
-		my ($plugin, $session) = @_; 
+	my $plugin = shift;
 		
         if (!defined $plugin->opts->filter) {
                 $plugin->nagios_die('command requires parameter for filter', CRITICAL);
@@ -408,7 +414,7 @@ sub check_string_not
 
 sub check_threshold_above
 {
-	my ($plugin, $session) = @_; 
+	my $plugin = shift;
 		
 	if (!defined $plugin->opts->filter) {
 		$plugin->nagios_die('command requires parameter for filter', CRITICAL);
@@ -449,7 +455,7 @@ sub check_threshold_above
 
 sub check_threshold_below
 {
-	my ($plugin, $session) = @_; 
+	my $plugin = shift;
 		
 	if (!defined $plugin->opts->filter) {
 		$plugin->nagios_die('command requires parameter for filter', CRITICAL);
@@ -489,44 +495,39 @@ sub check_threshold_below
 
 sub check_sslcert
 {
-	my ($plugin, $session) = @_; 
+	my $plugin = shift;
 	
-    if (!defined $plugin->opts->warning || !defined $plugin->opts->critical) {
-                $plugin->nagios_die('command requires parameter for warning and critical', CRITICAL);
-        }
+	my %params;
+	$params{'endpoint'}   = 'config';
+	$params{'objecttype'} = $plugin->opts->identifier; # could also be hardcoded with 'sslcertkey'
+	$params{'objectname'} = $plugin->opts->filter;
+	$params{'options'}    = undef;
+		
+	if (!defined $plugin->opts->warning || !defined $plugin->opts->critical) {
+		$plugin->nagios_die('command requires parameter for warning and critical', CRITICAL);
+	}
 
-        my $nitro_request = nitro_get_config($session, $plugin->opts->identifier, $plugin->opts->filter);
-        if ($nitro_request->{errorcode} != 0) {
-                $plugin->nagios_die($nitro_request->{message}, CRITICAL);
-        }
+    my $response = nitro_client($plugin, \%params);
+	$response = $response->{$plugin->opts->identifier};
 
-        if ($plugin->opts->verbose) {
-                print Dumper($nitro_request);
-        }
-
-        $nitro_request = $nitro_request->{$plugin->opts->identifier};
-
-        foreach $nitro_request (@{$nitro_request}) {
-                if ($nitro_request->{daystoexpiration} <= $plugin->opts->critical) {
-                        $plugin->add_message(CRITICAL, $nitro_request->{certkey} . " expires in " . $nitro_request->{daystoexpiration} . " days;");
-		} elsif ($nitro_request->{daystoexpiration} <= $plugin->opts->warning) {
-                        $plugin->add_message(WARNING, $nitro_request->{certkey} . " expires in " . $nitro_request->{daystoexpiration} . " days;");
-                } else {
-                        # OK, write some stats...
-                }
-        }
-
-        my ($code, $message) = $plugin->check_messages;
-
+	foreach $response (@{$response}) {
+		if ($response->{daystoexpiration} <= $plugin->opts->critical) {
+				$plugin->add_message(CRITICAL, $response->{certkey} . " expires in " . $response->{daystoexpiration} . " days;");
+		} elsif ($response->{daystoexpiration} <= $plugin->opts->warning) {
+			$plugin->add_message(WARNING, $response->{certkey} . " expires in " . $response->{daystoexpiration} . " days;");
+		}
+	}
+	
+	my ($code, $message) = $plugin->check_messages;
+	
 	$plugin->nagios_exit($code, "NetScaler SSLCerts " . $message);
 }
 
 sub dump_stat
 {
 	my $plugin = shift;
-
-	my %params;
 	
+	my %params;
 	$params{'endpoint'}   = 'stat';
 	$params{'objecttype'} = $plugin->opts->identifier;
 	$params{'objectname'} = $plugin->opts->filter;
@@ -540,7 +541,7 @@ sub dump_stat
 sub dump_config
 {
 	my $plugin = shift;
-
+	
 	my %params;
 	
 	$params{'endpoint'}   = 'config';
