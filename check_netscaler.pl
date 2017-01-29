@@ -1,14 +1,14 @@
 #!/usr/bin/perl -w
 ##############################################################################
 # check_netscaler
-# 
+#
 # Nagios Check Script Citrix NetScaler 
 # Simon Lauger <simon@lauger.name>
 #
 # https://github.com/slauger/check_netscaler
 #
-# Copyright (c) 2015-2016 Simon Lauger <simon.lauger@teamix.de>
-# 
+# Copyright (c) 2015-2017 Simon Lauger <simon@lauger.name>
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
@@ -19,7 +19,7 @@
 #    documentation and/or other materials provided with the distribution.
 # 3. The name of the author may not be used to endorse or promote products
 #    derived from this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 # IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 # OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -33,6 +33,7 @@
 ###############################################################################
 
 use strict;
+use warnings;
 
 use LWP;
 use JSON;
@@ -46,7 +47,7 @@ my $plugin = Nagios::Plugin->new(
 	version		=> '0.2.0',
 	url		=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX)',
-	usage		=> "Usage: %s [ -v|--verbose ] [ -H <host> ] [ -U <username> ] [ -P <password> ] [ -t <timeout> ] -H <host> -C <command> [ -I <identifier> ] [ -F <filter> ]",
+	usage		=> "Usage: %s [ -v|--verbose ] -H <host> [ -U <username> ] [ -P <password> ] [ -t <timeout> ] -C <command> [ -I <identifier> ] [ -F <filter> ]",
 	license		=> "This nagios plugin is free software, and comes with ABSOLUTELY NO WARRANTY.
 It may be used, redistributed and/or modified under the terms of the 3-Clause
 BSD License (see http://opensource.org/licenses/BSD-3-Clause).",
@@ -176,7 +177,7 @@ sub add_arg
 		foreach my $d (@desc) {
 			$help .= "\n   $d";
 		}
-
+		
 		if (defined $arg->{'default'}) {
 			$help .= " (default: $arg->{'default'})";
 		}
@@ -197,9 +198,7 @@ sub nitro_client {
 
 	my $plugin  = shift;
 	my $params  = shift;
-	
-	print Dumper($params);
-	
+		
 	my $lwp = LWP::UserAgent->new(
 		env_proxy => 1, 
 		keep_alive => 1, 
@@ -262,18 +261,14 @@ sub check_vserver
 		$plugin->nagios_die('command requires identifier parameter', CRITICAL);
 	}
 	
-	my %state = (
-		'up'     => '',
-		'down'   => '',
-		'unkown' => '',
-		'oos'    => '',
-	);
-	my %counter = (
-		'up'     => 0,
-		'down'   => 0,
-		'unkown' => 0,
-		'oos'    => 0,
-	);
+	# @TODO: should be fixed (@FIXME)
+	my %counter;
+	my $counter;
+	
+	$counter{'up'}     = 0;
+	$counter{'down'}   = 0;
+	$counter{'oos'}    = 0;
+	$counter{'unkown'} = 0;
 
 	my %params;
 	
@@ -283,7 +278,7 @@ sub check_vserver
 	$params{'options'}    = undef;
 
 	my $response = nitro_client($plugin, \%params);
-	my $response = $response->{$plugin->opts->identifier};
+	$response = $response->{$plugin->opts->identifier};
 	
 	foreach my $response (@{$response}) {
 		# NetScaler API Bug: returns "ENABLED" instead of "UP" when requesting services/servicegroups
@@ -294,21 +289,21 @@ sub check_vserver
 			$counter->{'down'}++;
 			$plugin->add_message(CRITICAL, $response->{'name'} . " down");
 		}
-		elsif ($nitro_request->{'state'} eq "OUT OF SERVICE") {
+		elsif ($response->{'state'} eq 'OUT OF SERVICE') {
 			$counter->{'oos'}++;
 			$plugin->add_message(CRITICAL, $response->{'name'} . " oos");
 		}
-		elsif ($nitro_request->{'state'} eq "UNKOWN") {
+		elsif ($response->{'state'} eq 'UNKOWN') {
 			$counter->{'unkown'}++;
-			$plugin->add_message(CRITICAL, $response->{'name'} . " unkown");				
+			$plugin->add_message(CRITICAL, $response->{'name'} . " unkown");
 		} else {
 			$counter->{'unkown'}++;
-			$plugin->add_message(CRITICAL, $response->{'name'} . " unknown");				
+			$plugin->add_message(CRITICAL, $response->{'name'} . " unknown");
 		}
 	}		
 	my ($code, $message) = $plugin->check_messages;
 		
-	my $stats = $counter_up . ' up, ' . $counter_down . ' down, ' . $counter_oos . ' oos, ' . $counter_unkown . ' unkown';
+	my $stats = $counter->{'up'} . ' up, ' . $counter->{'down'} . ' down, ' . $counter->{'oos'} . ' oos, ' . $counter->{'unkown'} . ' unkown';
 	
 	$plugin->add_perfdata(
 		label     => 'up',
@@ -358,24 +353,22 @@ sub check_string
                 $plugin->nagios_die('command requires parameter for warning and critical', CRITICAL);
         }
 
-	my $nitro_request = nitro_get_stats($session, $plugin->opts->identifier);
+		my %params;
+		$params{'endpoint'}   = 'stat';
+		$params{'objecttype'} = $plugin->opts->identifier;
+		$params{'objectname'} = undef;
+		$params{'options'}    = $plugin->opts->filter;
+	
+		my $response = nitro_client($plugin, \%params);
+		$response = $response->{$plugin->opts->identifier};
 
-	if ($nitro_request->{errorcode} != 0) {
-		$plugin->nagios_die($nitro_request->{message}, CRITICAL);
-	}
 
-	if ($plugin->opts->verbose) {
-		print Dumper($nitro_request);
-	}
-
-	$nitro_request = $nitro_request->{$plugin->opts->identifier};
-
-        if ($nitro_request->{$plugin->opts->filter} eq $plugin->opts->critical) {
-                $plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " matches keyword [current: " . $nitro_request->{$plugin->opts->filter} . "; critical: " . $plugin->opts->critical . "]", CRITICAL);
-        } elsif ($nitro_request->{$plugin->opts->filter} eq $plugin->opts->warning) {
-                $plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " matches keyword [current: " . $nitro_request->{$plugin->opts->filter} . "; warning: " . $plugin->opts->warning . "]", WARNING);
+        if ($response->{$plugin->opts->filter} eq $plugin->opts->critical) {
+                $plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " matches keyword [current: " . $response->{$plugin->opts->filter} . "; critical: " . $plugin->opts->critical . "]", CRITICAL);
+        } elsif ($response->{$plugin->opts->filter} eq $plugin->opts->warning) {
+                $plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " matches keyword [current: " . $response->{$plugin->opts->filter} . "; warning: " . $plugin->opts->warning . "]", WARNING);
         } else {
-                $plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " [".$nitro_request->{$plugin->opts->filter}."]", OK);
+                $plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " [".$response->{$plugin->opts->filter}."]", OK);
         }
 }
 
@@ -391,24 +384,22 @@ sub check_string_not
                 $plugin->nagios_die('command requires parameter for warning and critical', CRITICAL);
         }
 
-        my $nitro_request = nitro_get_stats($session, $plugin->opts->identifier);
-
-        if ($nitro_request->{errorcode} != 0) {
-                $plugin->nagios_die($nitro_request->{message}, CRITICAL);
-        }
-
-        if ($plugin->opts->verbose) {
-                print Dumper($nitro_request);
-        }
-
-        $nitro_request = $nitro_request->{$plugin->opts->identifier};
-
-        if ($nitro_request->{$plugin->opts->filter} ne $plugin->opts->critical) {
-                $plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " not matches keyword [current: " . $nitro_request->{$plugin->opts->filter} . "; critical: " . $plugin->opts->critical . "]", CRITICAL);
-        } elsif ($nitro_request->{$plugin->opts->filter} ne $plugin->opts->warning) { 
-                $plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " not matches keyword [current: " . $nitro_request->{$plugin->opts->filter} . "; warning: " . $plugin->opts->warning . "]", WARNING);
+		my %params;
+		$params{'endpoint'}   = 'stat';
+		$params{'objecttype'} = $plugin->opts->identifier;
+		$params{'objectname'} = undef;
+		$params{'options'}    = $plugin->opts->filter;
+	
+		my $response = nitro_client($plugin, \%params);
+		$response = $response->{$plugin->opts->identifier};
+	
+		
+        if ($response->{$plugin->opts->filter} ne $plugin->opts->critical) {
+                $plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " not matches keyword [current: " . $response->{$plugin->opts->filter} . "; critical: " . $plugin->opts->critical . "]", CRITICAL);
+        } elsif ($response->{$plugin->opts->filter} ne $plugin->opts->warning) { 
+                $plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " not matches keyword [current: " . $response->{$plugin->opts->filter} . "; warning: " . $plugin->opts->warning . "]", WARNING);
         } else {
-                $plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " [".$nitro_request->{$plugin->opts->filter}."]", OK);
+                $plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " [".$response->{$plugin->opts->filter}."]", OK);
         }
 }
 
@@ -424,32 +415,30 @@ sub check_threshold_above
 		$plugin->nagios_die('command requires parameter for warning and critical', CRITICAL);
 	}
 
-	my $nitro_request = nitro_get_stats($session, $plugin->opts->identifier);
+	my %params;
+	$params{'endpoint'}   = 'stat';
+	$params{'objecttype'} = $plugin->opts->identifier;
+	$params{'objectname'} = undef;
+	$params{'options'}    = $plugin->opts->filter;
+	
+	my $response = nitro_client($plugin, \%params);
+	$response = $response->{$plugin->opts->identifier};
 
-	if ($nitro_request->{errorcode} != 0) {
-		$plugin->nagios_die($nitro_request->{message}, CRITICAL);
-	}
-
-	$nitro_request = $nitro_request->{$plugin->opts->identifier};
-
-	if ($plugin->opts->verbose) {
-		print Dumper($nitro_request);
-	}
 
         $plugin->add_perfdata(
                 label     => $plugin->opts->identifier . "::" . $plugin->opts->filter,
-                value     => $nitro_request->{$plugin->opts->filter},
+                value     => $response->{$plugin->opts->filter},
                 min       => 0,
                 max       => undef,
                 threshold => undef,
         );
 
-	if ($nitro_request->{$plugin->opts->filter} >= $plugin->opts->critical) {
-		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " is above threshold [current: " . $nitro_request->{$plugin->opts->filter} . "; critical: " . $plugin->opts->critical . "]", CRITICAL);
-	} elsif ($nitro_request->{$plugin->opts->filter} >= $plugin->opts->warning) {
-		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " is above threshold [current: " . $nitro_request->{$plugin->opts->filter} . "; warning: " . $plugin->opts->warning . "]", WARNING);
+	if ($response->{$plugin->opts->filter} >= $plugin->opts->critical) {
+		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " is above threshold [current: " . $response->{$plugin->opts->filter} . "; critical: " . $plugin->opts->critical . "]", CRITICAL);
+	} elsif ($response->{$plugin->opts->filter} >= $plugin->opts->warning) {
+		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " is above threshold [current: " . $response->{$plugin->opts->filter} . "; warning: " . $plugin->opts->warning . "]", WARNING);
 	} else {
-		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " [".$nitro_request->{$plugin->opts->filter}."]", OK);
+		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " [".$response->{$plugin->opts->filter}."]", OK);
 	}
 }
 
@@ -465,31 +454,29 @@ sub check_threshold_below
 		$plugin->nagios_die('command requires parameter for warning and critical', CRITICAL);
 	}
 
-	my $nitro_request = nitro_get_stats($session, $plugin->opts->identifier);
-	if ($nitro_request->{errorcode} != 0) {
-		$plugin->nagios_die($nitro_request->{message}, CRITICAL);
-	}
-
-	$nitro_request = $nitro_request->{$plugin->opts->identifier};
-
-	if ($plugin->opts->verbose) {
-		print Dumper($nitro_request);
-	}
+	my %params;
+	$params{'endpoint'}   = 'stat';
+	$params{'objecttype'} = $plugin->opts->identifier;
+	$params{'objectname'} = undef;
+	$params{'options'}    = $plugin->opts->filter;
+	
+	my $response = nitro_client($plugin, \%params);
+	$response = $response->{$plugin->opts->identifier};
 
         $plugin->add_perfdata(
                 label     => $plugin->opts->identifier . "::" . $plugin->opts->filter,
-                value     => $nitro_request->{$plugin->opts->filter},
+                value     => $response->{$plugin->opts->filter},
                 min       => 0,
                 max       => undef,
                 threshold => undef,
         );
 
-	if ($nitro_request->{$plugin->opts->filter} <= $plugin->opts->critical) {
-		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " is below threshold [current: " . $nitro_request->{$plugin->opts->filter} . "; critical: " . $plugin->opts->critical . "]", CRITICAL);
-	} elsif ($nitro_request->{$plugin->opts->filter} <= $plugin->opts->warning) {
-		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " is below threshold [current: " . $nitro_request->{$plugin->opts->filter} . "; warning: " . $plugin->opts->warning . "]", WARNING);
+	if ($response->{$plugin->opts->filter} <= $plugin->opts->critical) {
+		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " is below threshold [current: " . $response->{$plugin->opts->filter} . "; critical: " . $plugin->opts->critical . "]", CRITICAL);
+	} elsif ($response->{$plugin->opts->filter} <= $plugin->opts->warning) {
+		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " is below threshold [current: " . $response->{$plugin->opts->filter} . "; warning: " . $plugin->opts->warning . "]", WARNING);
 	} else {
-		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " [".$nitro_request->{$plugin->opts->filter}."]", OK);
+		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " [".$response->{$plugin->opts->filter}."]", OK);
 	}
 }
 
