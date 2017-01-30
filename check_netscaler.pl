@@ -52,18 +52,11 @@ my $plugin = Nagios::Plugin->new(
 It may be used, redistributed and/or modified under the terms of the 3-Clause
 BSD License (see http://opensource.org/licenses/BSD-3-Clause).",
  	extra     => "
-This plugin connects to a Citrix NetScaler appliance trough the NITRO API and checks 
-different parameters regarding vservers, servicegroups, services, loadbalancing, 
-content switching, aaa and vpn. The goal of this project is to have one plugin for 
-every important metric on the Citrix NetSaler.
+This is a Nagios monitoring plugin for the Citrix NetScaler. The plugin works with
+the Citrix NetScaler NITRO API. The goal of this plugin is to have a single plugin
+for every important metric on the Citrix NetSaler.
 
-This plugin also works for MPX/SDX NetScaler Appliances.
-
-The Nitro.pm by Citrix (releases under the Apache License 2.0) is required for using this 
-plugin. Use the Download tab in your NetScaler WebGUI for getting the Nitro.pm (part of the
-Perl NITRO API samples)
-
-This Plugin is written and maintained by Simon Lauger.
+This plugin works for NetScaler VPX, MPX and SDX appliances.
 
 See https://github.com/slauger/check_netscaler for further information.");
 
@@ -463,13 +456,13 @@ sub check_threshold_below
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->identifier};
 
-        $plugin->add_perfdata(
-                label     => $plugin->opts->identifier . "::" . $plugin->opts->filter,
-                value     => $response->{$plugin->opts->filter},
-                min       => 0,
-                max       => undef,
-                threshold => undef,
-        );
+	$plugin->add_perfdata(
+		label     => $plugin->opts->identifier . "::" . $plugin->opts->filter,
+		value     => $response->{$plugin->opts->filter},
+		min       => 0,
+		max       => undef,
+		threshold => undef,
+	);
 
 	if ($response->{$plugin->opts->filter} <= $plugin->opts->critical) {
 		$plugin->nagios_die("NetScaler " . $plugin->opts->identifier . "::" . $plugin->opts->filter . " is below threshold [current: " . $response->{$plugin->opts->filter} . "; critical: " . $plugin->opts->critical . "]", CRITICAL);

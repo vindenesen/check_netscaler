@@ -16,8 +16,6 @@ This plugin works with VPX, MPX and SDX NetScaler Appliances. The api responses 
 
 The plugin is in alpha state and feedback and feature requests are appreciated. Performance data is available.
 
-The Nitro.pm by Citrix (released under the Apache License 2.0) is required for using this plugin.
-
 # Installation
 
 On a CentOS/RHEL machine execute the following commands to install all Perl dependencies (Nagios::Plugin, LWP, JSON):
@@ -27,8 +25,6 @@ On a CentOS/RHEL machine execute the following commands to install all Perl depe
 If you want to connect to your NetScaler with SSL/HTTPS you should also install the LWP HTTPS package.
 
     yum install perl-LWP-Protocol-https
-
-Copy the Nitro.pm in the same directory as the check_netscaler.pl file or copy it to you @INC (include path).
 
 # Usage Examples
 
