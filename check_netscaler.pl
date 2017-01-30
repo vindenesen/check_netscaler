@@ -1,36 +1,25 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 ##############################################################################
-# check_netscaler
-#
-# Nagios Check Script Citrix NetScaler 
+# check_netscaler.pl
+# Nagios Plugin for Citrix NetScaler 
 # Simon Lauger <simon@lauger.name>
 #
 # https://github.com/slauger/check_netscaler
 #
-# Copyright (c) 2015-2017 Simon Lauger <simon@lauger.name>
+# Copyright 2015-2017 Simon Lauger
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. The name of the author may not be used to endorse or promote products
-#    derived from this software without specific prior written permission.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-###############################################################################
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
 
 use strict;
 use warnings;
@@ -45,77 +34,83 @@ my $plugin = Nagios::Plugin->new(
 	plugin		=> 'check_netscaler',
 	shortname	=> 'check_netscaler',
 	version		=> '0.2.0',
-	url		=> 'https://github.com/slauger/check_netscaler',
+	url			=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX)',
-	usage		=> "Usage: %s [ -v|--verbose ] -H <host> [ -U <username> ] [ -P <password> ] [ -t <timeout> ] -C <command> [ -I <identifier> ] [ -F <filter> ]",
-	license		=> "This nagios plugin is free software, and comes with ABSOLUTELY NO WARRANTY.
-It may be used, redistributed and/or modified under the terms of the 3-Clause
-BSD License (see http://opensource.org/licenses/BSD-3-Clause).",
- 	extra     => "
-This is a Nagios monitoring plugin for the Citrix NetScaler. The plugin works with
+	usage		=> "Usage: %s -H <hostname> [ -u <username> ] [ -p <password> ]\n" .
+                   "-C <command> [ -i <identifier> ] [ -f <filter> ] [ -e <endpoint> ]\n".
+				   "[ -w <warning> ] [ -c <critical> ] [ -u]\n".
+	               "[ -v|--verbose ] [ -s|--ssl ] [ -t <timeout> ]",
+	license		=> 'http://www.apache.org/licenses/LICENSE-2.0',
+ 	extra     => 'This is a Nagios monitoring plugin for the Citrix NetScaler. The plugin works with
 the Citrix NetScaler NITRO API. The goal of this plugin is to have a single plugin
 for every important metric on the Citrix NetSaler.
 
 This plugin works for NetScaler VPX, MPX and SDX appliances.
 
-See https://github.com/slauger/check_netscaler for further information.");
+See https://github.com/slauger/check_netscaler for further information.');
 
 my @args = (
 	{
-		spec     => 'hostname|H=s',
-		usage    => '-H, --hostname=HOSTNAME',
-		desc     => 'Hostname of the NetScaler appliance to connect to',
-		required => 1,
+		spec		=> 'hostname|H=s',
+		usage		=> '-H, --hostname=STRING',
+		desc		=> 'Hostname of the NetScaler appliance to connect to',
+		required	=> 1,
 	},
 	{
-		spec     => 'username|U=s',
-		usage    => '-U, --username=USERNAME',
+		spec     => 'username|u=s',
+		usage    => '-u, --username=STRING',
 		desc     => 'Username to log into box as',
 		default  => 'nsroot',
 		required => 0,
 	},
 	{
-		spec     => 'ssl|s=s',
-		usage    => '-s, --ssl',
-		desc     => 'Establish connection to NetScaler using HTTPS',
-		default  => 'false',
-		required => 0,
-	},
-	{
-		spec     => 'password|P=s',
-		usage    => '-P, --password=PASSWORD',
+		spec     => 'password|p=s',
+		usage    => '-p, --password=STRING',
 		desc     => 'Password for login username',
 		default  => 'nsroot',
 		required => 0,
 	},
 	{
+		spec     => 'ssl|s!',
+		usage    => '-s, --ssl',
+		desc     => 'Establish connection to NetScaler using HTTPS',
+		default  => 0,
+		required => 0,
+	},
+	{
 		spec	 => 'command|C=s',
-		usage	 => '-C, --command=COMMAND',
+		usage	 => '-C, --command=STRING',
 		desc	 => 'Check to be executed on the appliance',
 		required => 1,
 	},
 	{
-		spec	 => 'identifier|I=s',
-		usage	 => '-I, --identifier=SUBCOMMAND',
+		spec	 => 'identifier|i=s',
+		usage	 => '-i, --identifier=STRING',
 		desc	 => 'Identifier for command',
 		required => 0,
 	},
 	{
-		spec	 => 'filter|F=s',
-		usage	 => '-F, --filter=FILTER',
+		spec	 => 'endpoint|e=s',
+		usage	 => '-e, --endpoint=STRING',
+		desc	 => 'Override option for the API endpoint (stat or config)',
+		required => 0,
+	},
+	{
+		spec	 => 'filter|f=s',
+		usage	 => '-f, --filter=STRING',
 		desc	 => 'Filter for current command (might be a object name)',
 		default  => '',
 		required => 0,
 	},
 	{
 		spec	=> 'warning|w=s',
-		usage	=> '-w, --warning=INTEGER',
+		usage	=> '-w, --warning=STRING',
 		desc	=> 'Value for warning',
 		required => 0,
 	},
 	{
 		spec	 => 'critical|c=s',
-		usage	 => '-c, --critical=INTEGER',
+		usage	 => '-c, --critical=STRING',
 		desc	 => 'Value for critical',
 		required => 0,
 	},	
@@ -127,22 +122,21 @@ foreach my $arg (@args) {
 
 $plugin->getopts;
 
-if ($plugin->opts->command eq 'check_vserver') {
-	check_vserver($plugin);
-} elsif ($plugin->opts->command eq 'check_threshold_above') {
+# check for up/down state of vservers, service, servicegroup
+if ($plugin->opts->command eq 'state') {
+	check_state($plugin);
+} elsif ($plugin->opts->command eq 'above') {
 	check_threshold_above($plugin);
-} elsif ($plugin->opts->command eq 'check_threshold_below') {
+} elsif ($plugin->opts->command eq 'below') {
 	check_threshold_below($plugin);
-} elsif ($plugin->opts->command eq 'check_string') {
+} elsif ($plugin->opts->command eq 'string') {
 	check_string($plugin);
-} elsif ($plugin->opts->command eq 'check_string_not') {
+} elsif ($plugin->opts->command eq 'string_not') {
 	check_string_not($plugin);
-} elsif ($plugin->opts->command eq 'check_sslcert') {
+} elsif ($plugin->opts->command eq 'sslcerts') {
 	check_sslcert($plugin);
-} elsif ($plugin->opts->command eq 'dump_stat') {
-	dump_stat($plugin);
-} elsif ($plugin->opts->command eq 'dump_config') {
-	dump_config($plugin);
+} elsif ($plugin->opts->command eq 'dump') {
+	check_debug($plugin);
 } else {
 	$plugin->nagios_die('unkown command ' . $plugin->opts->command . ' given', CRITICAL);
 }
@@ -195,7 +189,7 @@ sub nitro_client {
 	my $lwp = LWP::UserAgent->new(
 		env_proxy => 1, 
 		keep_alive => 1, 
-		timeout => 300, 
+		timeout => $plugin->opts->timeout, 
 		ssl_opts => { 
 			verify_hostname => 0, 
 			SSL_verify_mode => 0
@@ -204,7 +198,7 @@ sub nitro_client {
 	
 	my $protocol = undef;
 	
-	if ($plugin->opts->ssl eq 'true') {
+	if ($plugin->opts->ssl) {
 		$protocol = 'https://';
 	} else {
 		$protocol = 'http://';
@@ -246,7 +240,7 @@ sub nitro_client {
 	return $response;
 }
 
-sub check_vserver
+sub check_state
 {
 	my $plugin = shift;
 	
@@ -265,7 +259,7 @@ sub check_vserver
 
 	my %params;
 	
-	$params{'endpoint'}   = 'stats';
+	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
 	$params{'objecttype'} = $plugin->opts->identifier;
 	$params{'objectname'} = $plugin->opts->filter;
 	$params{'options'}    = undef;
@@ -347,10 +341,10 @@ sub check_string
         }
 
 		my %params;
-		$params{'endpoint'}   = 'stat';
+		$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
 		$params{'objecttype'} = $plugin->opts->identifier;
 		$params{'objectname'} = undef;
-		$params{'options'}    = $plugin->opts->filter;
+		$params{'options'}    = undef;
 	
 		my $response = nitro_client($plugin, \%params);
 		$response = $response->{$plugin->opts->identifier};
@@ -378,10 +372,10 @@ sub check_string_not
         }
 
 		my %params;
-		$params{'endpoint'}   = 'stat';
+		$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
 		$params{'objecttype'} = $plugin->opts->identifier;
 		$params{'objectname'} = undef;
-		$params{'options'}    = $plugin->opts->filter;
+		$params{'options'}    = undef;
 	
 		my $response = nitro_client($plugin, \%params);
 		$response = $response->{$plugin->opts->identifier};
@@ -409,10 +403,10 @@ sub check_threshold_above
 	}
 
 	my %params;
-	$params{'endpoint'}   = 'stat';
+	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
 	$params{'objecttype'} = $plugin->opts->identifier;
 	$params{'objectname'} = undef;
-	$params{'options'}    = $plugin->opts->filter;
+	$params{'options'}    = undef;
 	
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->identifier};
@@ -448,10 +442,10 @@ sub check_threshold_below
 	}
 
 	my %params;
-	$params{'endpoint'}   = 'stat';
+	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
 	$params{'objecttype'} = $plugin->opts->identifier;
 	$params{'objectname'} = undef;
-	$params{'options'}    = $plugin->opts->filter;
+	$params{'options'}    = undef;
 	
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->identifier};
@@ -478,9 +472,9 @@ sub check_sslcert
 	my $plugin = shift;
 	
 	my %params;
-	$params{'endpoint'}   = 'config';
-	$params{'objecttype'} = $plugin->opts->identifier; # could also be hardcoded with 'sslcertkey'
-	$params{'objectname'} = $plugin->opts->filter;
+	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
+	$params{'objecttype'} = $plugin->opts->identifier || 'sslcertkey';
+	$params{'objectname'} = undef;
 	$params{'options'}    = undef;
 		
 	if (!defined $plugin->opts->warning || !defined $plugin->opts->critical) {
@@ -488,7 +482,7 @@ sub check_sslcert
 	}
 
     my $response = nitro_client($plugin, \%params);
-	$response = $response->{$plugin->opts->identifier};
+	$response = $response->{$params{'objecttype'}};
 
 	foreach $response (@{$response}) {
 		if ($response->{daystoexpiration} <= $plugin->opts->critical) {
@@ -503,28 +497,13 @@ sub check_sslcert
 	$plugin->nagios_exit($code, "NetScaler SSLCerts " . $message);
 }
 
-sub dump_stat
-{
-	my $plugin = shift;
-	
-	my %params;
-	$params{'endpoint'}   = 'stat';
-	$params{'objecttype'} = $plugin->opts->identifier;
-	$params{'objectname'} = $plugin->opts->filter;
-	$params{'options'}    = undef;
-	
-	my $response = nitro_client($plugin, \%params);
-	
-	print Dumper($response);
-}
-
-sub dump_config
+sub check_debug
 {
 	my $plugin = shift;
 	
 	my %params;
 	
-	$params{'endpoint'}   = 'config';
+	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
 	$params{'objecttype'} = $plugin->opts->identifier;
 	$params{'objectname'} = $plugin->opts->filter;
 	$params{'options'}    = undef;
