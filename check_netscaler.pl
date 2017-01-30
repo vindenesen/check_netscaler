@@ -36,18 +36,18 @@ my $plugin = Nagios::Plugin->new(
 	version		=> '0.2.0',
 	url			=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX)',
-	usage		=> "Usage: %s -H <hostname> [ -u <username> ] [ -p <password> ]\n" .
-                   "-C <command> [ -i <identifier> ] [ -f <filter> ] [ -e <endpoint> ]\n".
-				   "[ -w <warning> ] [ -c <critical> ] [ -u]\n".
-	               "[ -v|--verbose ] [ -s|--ssl ] [ -t <timeout> ]",
+	usage		=> "Usage: %s -H <hostname> [ -u <username> ] [ -p <password> ]
+-C <command> [ -i <identifier> ] [ -f <filter> ] [ -e <endpoint> ]
+[ -w <warning> ] [ -c <critical> ] [ -v|--verbose ] [ -s|--ssl ] [ -t <timeout> ]",
 	license		=> 'http://www.apache.org/licenses/LICENSE-2.0',
- 	extra     => 'This is a Nagios monitoring plugin for the Citrix NetScaler. The plugin works with
+ 	extra     => '
+This is a Nagios monitoring plugin for the Citrix NetScaler. The plugin works with
 the Citrix NetScaler NITRO API. The goal of this plugin is to have a single plugin
 for every important metric on the Citrix NetSaler.
 
 This plugin works for NetScaler VPX, MPX and SDX appliances.
 
-See https://github.com/slauger/check_netscaler for further information.');
+See https://github.com/slauger/check_netscaler for details.');
 
 my @args = (
 	{
