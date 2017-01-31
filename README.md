@@ -45,9 +45,13 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
     ./check_netscaler.pl -H ${IPADDR} -s -C state -o csvserver
 
     # NetScaler::SSLvServer::State (obsolet and replaced by lbvserver for newer builds)
-    #./check_netscaler.pl -H ${IPADDR} -s -C state -o sslvserver
-## Check status of a single service
+    ./check_netscaler.pl -H ${IPADDR} -s -C state -o sslvserver
+## Check status for services
+    # NetScaler:::CSvServer::State
+    ./check_netscaler.pl -H ${IPADDR} -s -C state -o service
 ## Check status of servicegroups
+    # NetScaler:::CSvServer::State
+    ./check_netscaler.pl -H ${IPADDR} -s -C state -o servicegroup
 ## Check system health
     # NetScaler::System::Memory
     ./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n memusagepcnt -w 75 -c 80
@@ -63,21 +67,16 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
 
     # NetScaler::System::Disk1
     ./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n disk1perusage -w 75 -c 80
-
 ## Check high availability status
     # NetScaler::HA::Status
     ./check_netscaler.pl -H ${IPADDR} -s -C string_not -o hanode -n hacurstatus -w YES -c YES
 
     # NetScaler::HA::State
     ./check_netscaler.pl -H ${IPADDR} -s -C string_not -o hanode -n hacurstate -w UP -c UP
-
 ## Check lifetime of all installed ssl certificates
     # NetScaler::SSL::Certificates
     ./check_netscaler.pl -H ${IPADDR} -s -C sslcerts -w 30 -c 10
 
-## Check if all configuration changes are saved
-	# NetScaler::Configuration
-	./check_netscaler.pl
 
 # Configuration File
 The plugin uses the Nagios::Plugin Libary, so you can use --extra-opts and seperate the login crendetials from your nagios configuration.

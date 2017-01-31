@@ -134,7 +134,7 @@ if ($plugin->opts->command eq 'state') {
 	check_string_not($plugin);
 } elsif ($plugin->opts->command eq 'sslcerts') {
 	check_sslcert($plugin);
-} elsif ($plugin->opts->command eq 'dump') {
+} elsif ($plugin->opts->command eq 'debug') {
 	check_debug($plugin);
 } else {
 	$plugin->nagios_die('unkown command ' . $plugin->opts->command . ' given', CRITICAL);
@@ -249,7 +249,27 @@ sub check_state
 
 	my %params;
 	
-	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
+	my $field_name;
+	my $field_state;
+	
+	# well, i guess the citrix api developers were drunk 
+	if ($plugin->opts->objecttype eq 'service') {
+		$field_name         = 'name';
+		$field_state        = 'svrstate';
+		
+		$params{'endpoint'} = $plugin->opts->endpoint || 'config';
+	} elsif ($plugin->opts->objecttype eq 'servicegroup') {
+		$field_name         = 'servicegroupname';
+		$field_state        = 'svrstate';
+		
+		$params{'endpoint'} = $plugin->opts->endpoint || 'config';
+	} else {
+		$field_name         = 'name';
+		$field_state        = 'state';
+		
+		$params{'endpoint'} = $plugin->opts->endpoint || 'stat';
+	}
+	
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = $plugin->opts->objectname;
 	$params{'options'}    = undef;
@@ -258,24 +278,23 @@ sub check_state
 	$response = $response->{$plugin->opts->objecttype};
 	
 	foreach my $response (@{$response}) {
-		# NetScaler API Bug: returns "ENABLED" instead of "UP" when requesting services/servicegroups
-		if ($response->{'state'} eq 'UP' || $response->{'state'} eq 'ENABLED') {
+		if ($response->{$field_state} eq 'UP') {
 			$counter{'up'}++;
 		}
-		elsif ($response->{'state'} eq 'DOWN') {
+		elsif ($response->{$field_state} eq 'DOWN') {
 			$counter{'down'}++;
-			$plugin->add_message(CRITICAL, $response->{'name'} . ' down');
+			$plugin->add_message(CRITICAL, $response->{$field_name} . ' down');
 		}
-		elsif ($response->{'state'} eq 'OUT OF SERVICE') {
+		elsif ($response->{$field_state} eq 'OUT OF SERVICE') {
 			$counter{'oos'}++;
-			$plugin->add_message(CRITICAL, $response->{'name'} . ' oos');
+			$plugin->add_message(CRITICAL, $response->{$field_name} . ' oos');
 		}
-		elsif ($response->{'state'} eq 'UNKOWN') {
+		elsif ($response->{$field_state} eq 'UNKOWN') {
 			$counter{'unkown'}++;
-			$plugin->add_message(CRITICAL, $response->{'name'} . ' unkown');
+			$plugin->add_message(CRITICAL, $response->{$field_name} . ' unkown');
 		} else {
 			$counter{'unkown'}++;
-			$plugin->add_message(CRITICAL, $response->{'name'} . ' unknown');
+			$plugin->add_message(CRITICAL, $response->{$field_name} . ' unknown');
 		}
 	}		
 	my ($code, $message) = $plugin->check_messages;
@@ -485,6 +504,11 @@ sub check_sslcert
 	my ($code, $message) = $plugin->check_messages;
 	
 	$plugin->nagios_exit($code, "NetScaler SSLCerts " . $message);
+}
+
+sub check_nsconfig
+{
+	
 }
 
 sub check_debug
