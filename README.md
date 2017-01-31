@@ -29,30 +29,40 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
 # Usage Examples
 
 ## Check status of vServers
-    # NetScaler::VPNvServer::State
-    ./check_netscaler.pl -H ${IPADDR} -s -C state -o vpnvserver
-
-    # NetScaler::LBvServer::State
+    # NetScaler::LBvServer
     ./check_netscaler.pl -H ${IPADDR} -s -C state -o lbvserver
 
-    # NetScaler::GSLBvServer::State
+    # NetScaler::LBvServer::Website
+    ./check_netscaler.pl -H ${IPADDR} -s -C state -o lbvserver -n vs_lb_http_webserver
+
+    # NetScaler::VPNvServer
+    ./check_netscaler.pl -H ${IPADDR} -s -C state -o vpnvserver
+
+    # NetScaler::GSLBvServer
     ./check_netscaler.pl -H ${IPADDR} -s -C state -o gslbvserver
 
-    # NetScaler:::AAAvServer::State
+    # NetScaler::AAAvServer
     ./check_netscaler.pl -H ${IPADDR} -s -C state -o authenticationvserver
 
-    # NetScaler:::CSvServer::State
+    # NetScaler::CSvServer
     ./check_netscaler.pl -H ${IPADDR} -s -C state -o csvserver
 
-    # NetScaler::SSLvServer::State (obsolet and replaced by lbvserver for newer builds)
+    # NetScaler::SSLvServer (obsolet and replaced by lbvserver for newer builds)
     ./check_netscaler.pl -H ${IPADDR} -s -C state -o sslvserver
 
-## Check status for services
-    # NetScaler:::CSvServer::State
+## Check status of services
+    # NetScaler::Services
     ./check_netscaler.pl -H ${IPADDR} -s -C state -o service
+
+    # NetScaler::Services::Webserver
+    ./check_netscaler.pl -H ${IPADDR} -s -C state -o service -n svc_webserver
+
 ## Check status of servicegroups
-    # NetScaler:::CSvServer::State
+    # NetScaler::Servicegroups
     ./check_netscaler.pl -H ${IPADDR} -s -C state -o servicegroup
+
+    # NetScaler::ServiceGroups::Webservers
+    ./check_netscaler.pl -H ${IPADDR} -s -C state -o servicegroup -n sg_webservers
 
 ## Check system health
     # NetScaler::System::Memory
