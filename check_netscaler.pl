@@ -136,7 +136,7 @@ if ($plugin->opts->command eq 'state') {
 } elsif ($plugin->opts->command eq 'string_not') {
 	# check if a response does not contains a specific string
 	check_string_not($plugin);
-} elsif ($plugin->opts->command eq 'sslcerts') {
+} elsif ($plugin->opts->command eq 'sslcert') {
 	# check for the lifetime of installed certificates
 	check_sslcert($plugin);
 } elsif ($plugin->opts->command eq 'nsconfig') {

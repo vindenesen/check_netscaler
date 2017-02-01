@@ -7,7 +7,7 @@ Currently the plugin has the following subcommands:
 - **state:** check the current service state of vservers (e.g. lb, vpn, gslb), services and service groups
 - **string, string_not:** check if a string exists in the api response or not (e.g. HA or cluster status)
 - **above, below:** check if a value is above/below a threshold (e.g. traffic limits, concurrent connections)
-- **sslcerts:**: check the lifetime for installed ssl certificates
+- **sslcert:**: check the lifetime for installed ssl certificates
 - **nsconfig:** check for configuration changes which are not saved to disk
 - **debug:** debug command, print all data for a endpoint
 
@@ -90,10 +90,10 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
 
 ## Check expiration of installed ssl certificates
     # NetScaler::Certs
-    ./check_netscaler.pl -H ${IPADDR} -s -C sslcerts -w 30 -c 10
+    ./check_netscaler.pl -H ${IPADDR} -s -C sslcert -w 30 -c 10
 
     # NetScaler::Certs::Wildcard
-    ./check_netscaler.pl -H ${IPADDR} -s -C sslcerts -n wildcard.example.com -w 30 -c 10
+    ./check_netscaler.pl -H ${IPADDR} -s -C sslcert -n wildcard.example.com -w 30 -c 10
 
 ## Check for unsaved configuration changes
     # NetScaler::NS
