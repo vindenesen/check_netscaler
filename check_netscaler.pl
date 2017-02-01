@@ -41,7 +41,7 @@ use strict;
 my $plugin = Nagios::Plugin->new(
 	plugin		=> 'check_netscaler',
 	shortname	=> 'check_netscaler',
-	version		=> '0.1.2',
+	version		=> '0.2.0',
 	url		=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX)',
 	usage		=> "Usage: %s [ -v|--verbose ] [ -H <host> ] [ -U <username> ] [ -P <password> ] [ -t <timeout> ] -H <host> -C <command> [ -I <identifier> ] [ -F <filter> ]",
