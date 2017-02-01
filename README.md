@@ -7,7 +7,8 @@ Currently the plugin has the following subcommands:
 - **state:** check the current service state of vservers (e.g. lb, vpn, gslb), services and service groups
 - **string, string_not:** check if a string exists in the api response or not (e.g. HA or cluster status)
 - **above, below:** check if a value is above/below a threshold (e.g. traffic limits, concurrent connections)
-- **sslcerts:**: check the lifetime for all installed ssl certificates
+- **sslcerts:**: check the lifetime for installed ssl certificates
+- **nsconfig:** check for configuration changes which are not saved to disk
 - **debug:** debug command, print all data for a endpoint
 
 This plugin works with VPX, MPX and SDX NetScaler Appliances. The api responses may differ by build, appliance type and your installed license.
