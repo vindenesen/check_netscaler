@@ -337,7 +337,7 @@ sub check_state
 	);
 
 	if ($code == OK) {
-		$plugin->nagios_exit($code, $plugin->opts->objecttype . ' OK ' . $stats);
+		$plugin->nagios_exit($code, $plugin->opts->objecttype . ' OK' . $stats);
 	} else {
 		$plugin->nagios_exit($code, $plugin->opts->objecttype . ' ' . $message . $stats);
 	}
@@ -546,9 +546,9 @@ sub check_nsconfig
 	$response = $response->{$params{'objecttype'}};
 		
 	if (!defined $response->{'configchanged'} || !$response->{'configchanged'}) {
-		$plugin->nagios_exit(WARNING, 'unsaved configuration changes found');
+		$plugin->nagios_exit(WARNING, 'nsconfig::configchanged unsaved configuration changes found');
 	} else {
-		$plugin->nagios_exit(OK, 'no unsaved configuration changes found');
+		$plugin->nagios_exit(OK, 'nsconfig::configchanged no unsaved configuration changes found');
 	}
 }
 
