@@ -545,10 +545,10 @@ sub check_nsconfig
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$params{'objecttype'}};
 		
-	if (!defined $response->{'configchanged'} || !$response->{'configchanged'}) {
-		$plugin->nagios_exit(WARNING, 'nsconfig::configchanged unsaved configuration changes found');
+	if (!defined $response->{'configchanged'} || $response->{'configchanged'}) {
+		$plugin->nagios_exit(WARNING, 'nsconfig::configchanged unsaved configuration changes');
 	} else {
-		$plugin->nagios_exit(OK, 'nsconfig::configchanged no unsaved configuration changes found');
+		$plugin->nagios_exit(OK, 'nsconfig::configchanged OK');
 	}
 }
 
