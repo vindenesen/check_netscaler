@@ -36,6 +36,9 @@ fi
 # NetScaler::SSLCerts
 ./check_netscaler.pl -H ${IPADDR} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C sslcerts -w 30 -c 10
 
+# NetScaler::NSConfig
+./check_netscaler.pl -H ${IPADDR} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C nsconfig
+
 # NetScaler::VPNvServer::State
 ./check_netscaler.pl -H ${IPADDR} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C state -o vpnvserver
 

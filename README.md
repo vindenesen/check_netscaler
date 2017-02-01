@@ -61,23 +61,23 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
     # NetScaler::Servicegroups
     ./check_netscaler.pl -H ${IPADDR} -s -C state -o servicegroup
 
-    # NetScaler::ServiceGroups::Webservers
+    # NetScaler::Servicegroups::Webservers
     ./check_netscaler.pl -H ${IPADDR} -s -C state -o servicegroup -n sg_webservers
 
 ## Check system health
-    # NetScaler::System::Memory
+    # NetScaler::Memory
     ./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n memusagepcnt -w 75 -c 80
 
-    # NetScaler::System::CPU
+    # NetScaler::CPU
     ./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n cpuusagepcnt -w 75 -c 80
 
-    # NetScaler::System::CPU::MGMT
+    # NetScaler::CPUMGMT
     ./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n mgmtcpuusagepcnt -w 75 -c 80
 
-    # NetScaler::System::Disk0
+    # NetScaler::Disk0
     ./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n disk0perusage -w 75 -c 80
 
-    # NetScaler::System::Disk1
+    # NetScaler::Disk1
     ./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n disk1perusage -w 75 -c 80
 
 ## Check high availability status
@@ -87,9 +87,16 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
     # NetScaler::HA::State
     ./check_netscaler.pl -H ${IPADDR} -s -C string_not -o hanode -n hacurstate -w UP -c UP
 
-## Check lifetime of all installed ssl certificates
-    # NetScaler::SSL::Certificates
+## Check expiration of installed ssl certificates
+    # NetScaler::Certs
     ./check_netscaler.pl -H ${IPADDR} -s -C sslcerts -w 30 -c 10
+
+    # NetScaler::Certs::Wildcard
+    ./check_netscaler.pl -H ${IPADDR} -s -C sslcerts -n wildcard.example.com -w 30 -c 10
+
+## Check for unsaved configuration changes
+    # NetScaler::NS
+    ./check_netscaler.pl -H ${IPADDR} -s -C nsconfig
 
 ## Debug command
     # Print all LB vServers (stat endpoint)
