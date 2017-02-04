@@ -96,7 +96,7 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
     ./check_netscaler.pl -H ${IPADDR} -s -C sslcert -n wildcard.example.com -w 30 -c 10
 
 ## Check for unsaved configuration changes
-    # NetScaler::NS
+    # NetScaler::Config
     ./check_netscaler.pl -H ${IPADDR} -s -C nsconfig
 
 ## Debug command
