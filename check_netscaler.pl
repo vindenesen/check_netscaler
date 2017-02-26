@@ -142,6 +142,9 @@ if ($plugin->opts->command eq 'state') {
 } elsif ($plugin->opts->command eq 'nsconfig') {
 	# check for unsaved configuration changes
 	check_nsconfig($plugin);
+} elsif ($plugin->opts->command eq 'staserver') {
+	# check the state of the staservers
+	check_staserver($plugin);
 } elsif ($plugin->opts->command eq 'debug') {
 	# dump the full response of the nitro api 
 	check_debug($plugin);
@@ -529,6 +532,46 @@ sub check_sslcert
 		$plugin->nagios_exit($code, 'sslcertkey OK');
 	} else {
 		$plugin->nagios_exit($code, 'sslcertkey ' . $message);
+	}
+}
+
+sub check_staserver
+{
+	my $plugin = shift;
+	
+	my %params;
+	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
+	$params{'objectname'} = $plugin->opts->objectname || '';
+	$params{'options'}    = undef;
+
+	if ($params{'objectname'} eq '') {
+		$params{'objecttype'} = $plugin->opts->objecttype || 'vpnglobal_staserver_binding';
+	} else {
+		$params{'objecttype'} = $plugin->opts->objecttype || 'vpnvserver_staserver_binding';
+	}
+		
+	my $response = nitro_client($plugin, \%params);
+	$response = $response->{$params{'objecttype'}};
+	
+	# return critical if all staservers are down at once
+	my $critical = 1;
+	
+	# check if any stas are in down state
+	foreach $response (@{$response}) {
+		if ($response->{'staauthid'} eq '') {
+			$plugin->add_message(WARNING, $response->{'staserver'} . ' unavailable;');
+		} else {
+			$plugin->add_message(OK, $response->{'staserver'} . ' OK (' . $response->{'staauthid'}.');');
+			$critical = 0;
+		}
+	}
+	
+	my ($code, $message) = $plugin->check_messages;
+	
+	if ($critical) {
+		$plugin->nagios_exit(CRITICAL, 'staservice ' . $message);
+	} else {
+		$plugin->nagios_exit($code, 'staservice ' . $message);
 	}
 }
 
