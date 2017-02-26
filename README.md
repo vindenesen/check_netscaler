@@ -7,7 +7,7 @@ Currently the plugin has the following subcommands:
 - **state:** check the current service state of vservers (e.g. lb, vpn, gslb), services and service groups
 - **string, string_not:** check if a string exists in the api response or not (e.g. HA or cluster status)
 - **above, below:** check if a value is above/below a threshold (e.g. traffic limits, concurrent connections)
-- **sslcert:**: check the lifetime for installed ssl certificates
+- **sslcert:** check the lifetime for installed ssl certificates
 - **nsconfig:** check for configuration changes which are not saved to disk
 - **staservers:** check if configured STA servers are available
 - **debug:** debug command, print all data for a endpoint
