@@ -9,7 +9,7 @@ Currently the plugin has the following subcommands:
 - **above, below:** check if a value is above/below a threshold (e.g. traffic limits, concurrent connections)
 - **sslcert:** check the lifetime for installed ssl certificates
 - **nsconfig:** check for configuration changes which are not saved to disk
-- **staservers:** check if configured STA servers are available
+- **staserver:** check if configured STA servers are available
 - **debug:** debug command, print all data for a endpoint
 
 This plugin works with VPX, MPX and SDX NetScaler Appliances. The api responses may differ by build, appliance type and your installed license.
@@ -103,10 +103,10 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
 ## Check if STA servers are working
 
     # NetScaler::STA
-    ./check_netscaler.pl -H ${IPADDR} -s -C staservers
+    ./check_netscaler.pl -H ${IPADDR} -s -C staserver
 
     # NetScaler::STA
-    ./check_netscaler.pl -H ${IPADDR} -s -C staservers -n vs_vpn_gateway
+    ./check_netscaler.pl -H ${IPADDR} -s -C staserver -n vs_vpn_gateway
 
 ## Debug command
     # Print all LB vServers (stat endpoint)
