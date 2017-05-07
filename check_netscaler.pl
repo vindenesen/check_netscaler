@@ -273,7 +273,7 @@ sub check_state
 	} elsif ($plugin->opts->objecttype eq 'servicegroup') {
 		$params{'endpoint'} = $plugin->opts->endpoint || 'config';
 		$field_name  = 'servicegroupname';
-		$field_state = 'svrstate';
+		$field_state = 'servicegroupeffectivestate';
 	} else {
 		$params{'endpoint'} = $plugin->opts->endpoint || 'stat';
 		$field_name  = 'name';
