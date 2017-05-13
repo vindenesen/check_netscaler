@@ -1,4 +1,4 @@
-## 1.0.1 (2017-05-13)
+## 1.1.0 (2017-05-13)
  - new check command for STA services
  - small documentation fixes
 
