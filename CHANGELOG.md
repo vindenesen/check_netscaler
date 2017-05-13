@@ -1,3 +1,7 @@
+## 1.0.1 (2017-05-13)
+ - new check command for STA services
+ - small documentation fixes
+
 ## 1.0.0 (2017-02-01)
  - huge rewrite of the Plugin, changed nearly every parameters 
  - upgrading from versions prior to 1.0.0 require to change your monitoring configuration

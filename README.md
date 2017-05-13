@@ -105,15 +105,15 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
     # NetScaler::STA
     ./check_netscaler.pl -H ${IPADDR} -s -C staserver
 
-    # NetScaler::STA
+    # NetScaler::STA::vs_vpn_gateway
     ./check_netscaler.pl -H ${IPADDR} -s -C staserver -n vs_vpn_gateway
 
 ## Debug command
     # Print all LB vServers (stat endpoint)
-	./check_netscaler.pl -H ${IPADDR} -s -C debug -o lbvserver
+    ./check_netscaler.pl -H ${IPADDR} -s -C debug -o lbvserver
 
     # Print all LB vServers (config endpoint)
-	./check_netscaler.pl -H ${IPADDR} -s -C debug -o lbvserver -e config
+    ./check_netscaler.pl -H ${IPADDR} -s -C debug -o lbvserver -e config
 
 # Configuration File
 The plugin uses the Nagios::Plugin Libary, so you can use --extra-opts and seperate the login crendetials from your nagios configuration.

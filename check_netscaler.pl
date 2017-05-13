@@ -33,7 +33,7 @@ use Nagios::Plugin;
 my $plugin = Nagios::Plugin->new(
 	plugin		=> 'check_netscaler',
 	shortname	=> 'NetScaler',
-	version		=> '1.0.0',
+	version		=> '1.0.1',
 	url			=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX)',
 	usage		=> 'Usage: %s -H <hostname> [ -u <username> ] [ -p <password> ]
