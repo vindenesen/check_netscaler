@@ -226,8 +226,6 @@ sub nitro_client {
 
 	my $url = $protocol . $plugin->opts->hostname . $port . '/nitro/v1/' . $params->{'endpoint'} . '/' . $params->{'objecttype'};
 
-print $url;
-	
 	if ($params->{'objectname'} && $params->{'objectname'} ne '') {
 		$url  = $url . '/' . uri_escape(uri_escape($params->{'objectname'}));
 	}
