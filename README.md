@@ -12,7 +12,7 @@ Currently the plugin has the following subcommands:
 - **staserver:** check if configured STA servers are available
 - **debug:** debug command, print all data for a endpoint
 
-This plugin works with VPX, MPX and SDX NetScaler Appliances. The api responses may differ by build, appliance type and your installed license.
+This plugin works with VPX, MPX, SDX and CPX NetScaler Appliances. The api responses may differ by build, appliance type and your installed license.
 
 The plugin supports performance data for the commands state and the above or below threshold checks.
 
@@ -141,4 +141,4 @@ http://NSIP/nitro-rest.tgz (where NSIP is the IP address of your NetScaler appli
 
 # Tested Firmware
 
-Tested with NetScaler 10.5, 11.0 and 11.1. The plugin should work with all available releases.
+Tested with NetScaler 10.5, 11.0, 11.1 and 12.0. The plugin should work with all available firmware builds.

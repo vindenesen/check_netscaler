@@ -33,9 +33,9 @@ use Nagios::Plugin;
 my $plugin = Nagios::Plugin->new(
 	plugin		=> 'check_netscaler',
 	shortname	=> 'NetScaler',
-	version		=> '1.1.0',
+	version		=> '1.1.1',
 	url			=> 'https://github.com/slauger/check_netscaler',
-	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX)',
+	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX/CPX)',
 	usage		=> 'Usage: %s -H <hostname> [ -u <username> ] [ -p <password> ]
 -C <command> [ -o <objecttype> ] [ -n <objectname> ] [ -e <endpoint> ]
 [ -w <warning> ] [ -c <critical> ] [ -v|--verbose ] [ -s|--ssl ] [ -t <timeout> ]',
@@ -45,7 +45,7 @@ This is a Nagios monitoring plugin for the Citrix NetScaler. The plugin works wi
 the Citrix NetScaler NITRO API. The goal of this plugin is to have a single plugin
 for every important metric on the Citrix NetSaler.
 
-This plugin works for NetScaler VPX, MPX and SDX appliances.
+This plugin works for NetScaler VPX, MPX, SDX and CPX appliances.
 
 See https://github.com/slauger/check_netscaler for details.');
 
