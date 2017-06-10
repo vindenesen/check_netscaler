@@ -78,6 +78,13 @@ my @args = (
 		required => 0,
 	},
 	{
+		spec => 'port|P=i',
+		usage => '-P, --port=INTEGER',
+		desc => 'Establish connection to a alternate TCP Port',
+		default => 0,
+		required => 0,
+	},
+	{
 		spec => 'command|C=s',
 		usage => '-C, --command=STRING',
 		desc => 'Check to be executed on the appliance',
@@ -208,8 +215,18 @@ sub nitro_client {
 	} else {
 		$protocol = 'http://';
 	}
-	
-	my $url = $protocol . $plugin->opts->hostname . '/nitro/v1/' . $params->{'endpoint'} . '/' . $params->{'objecttype'};
+
+	my $port = undef;
+
+	if ($plugin->opts->port) {
+		$port = ':' . $plugin->opts->port;
+	} else {
+		$port = '';
+	}
+
+	my $url = $protocol . $plugin->opts->hostname . $port . '/nitro/v1/' . $params->{'endpoint'} . '/' . $params->{'objecttype'};
+
+print $url;
 	
 	if ($params->{'objectname'} && $params->{'objectname'} ne '') {
 		$url  = $url . '/' . uri_escape(uri_escape($params->{'objectname'}));
