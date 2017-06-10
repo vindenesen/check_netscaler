@@ -1,3 +1,7 @@
+## 1.1.1 (2017-06-10)
+- bugfix for servicegroups in 12.0 (#12)
+- new option to connect to an alternate port (for CPX instances)
+
 ## 1.1.0 (2017-05-13)
  - new check command for STA services
  - small documentation fixes
