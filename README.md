@@ -171,6 +171,12 @@ username=nagios
 password=password
 ```
 
+# Contributors
+- @slauger
+- @macampo
+- @Velociraptor85
+- @bb-ricardo
+
 # NITRO API Documentation
 
 You will find a full documentation about the NITRO API on your NetScaler Appliance in the "Download" area.
