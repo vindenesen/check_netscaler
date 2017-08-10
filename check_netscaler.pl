@@ -135,10 +135,10 @@ if ($plugin->opts->command eq 'state') {
 	check_state($plugin);
 } elsif ($plugin->opts->command eq 'above') {
 	# check if a response is above a threshold
-	check_threshold_above($plugin);
+	check_threshold($plugin, $plugin->opts->command);
 } elsif ($plugin->opts->command eq 'below') {
 	# check if a response is below  a threshold
-	check_threshold_below($plugin);
+	check_threshold($plugin, $plugin->opts->command);
 } elsif ($plugin->opts->command eq 'string') {
 	# check if a response does contains a specific string
 	check_string($plugin);
@@ -446,9 +446,10 @@ sub check_string_not
 	}
 }
 
-sub check_threshold_above
+sub check_threshold
 {
 	my $plugin = shift;
+	my $direction = shift;
 
 	if (!defined $plugin->opts->objecttype) {
 		$plugin->nagios_die('command requires parameter for objecttype');
@@ -460,6 +461,10 @@ sub check_threshold_above
 
 	if (!defined $plugin->opts->warning || !defined $plugin->opts->critical) {
 		$plugin->nagios_die('command requires parameter for warning and critical');
+	}
+
+	if ($direction ne "above" && $direction ne "below") {
+		$plugin->nagios_die('threshold can only be checked for "above" and "below"');
 	}
 
 	my %params;
@@ -475,61 +480,18 @@ sub check_threshold_above
 	$plugin->add_perfdata(
 		label    => $plugin->opts->objecttype . '::' . $plugin->opts->objectname,
 		value    => $response->{$plugin->opts->objectname},
-		min      => 0,
+		min      => undef,
 		max      => undef,
 		warning  => $plugin->opts->warning,
 		critical => $plugin->opts->critical,
 	);
 
-	if ($response->{$plugin->opts->objectname} >= $plugin->opts->critical) {
-		$plugin->nagios_exit(CRITICAL, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' is above threshold (current: ' . $response->{$plugin->opts->objectname} . ', critical: ' . $plugin->opts->critical . ')');
-	} elsif ($response->{$plugin->opts->objectname} >= $plugin->opts->warning) {
-		$plugin->nagios_exit(WARNING, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' is above threshold (current: ' . $response->{$plugin->opts->objectname} . ', warning: ' . $plugin->opts->warning . ')');
+	if (($direction eq "above" && $response->{$plugin->opts->objectname} >= $plugin->opts->critical) || ($direction eq "below" && $response->{$plugin->opts->objectname} <= $plugin->opts->critical)) {
+		$plugin->nagios_exit(CRITICAL, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' is ' . $direction . ' threshold (current: ' . $response->{$plugin->opts->objectname} . ', critical: ' . $plugin->opts->critical . ')');
+	} elsif (($direction eq "above" && $response->{$plugin->opts->objectname} >= $plugin->opts->warning) || ($direction eq "below" && $response->{$plugin->opts->objectname} <= $plugin->opts->warning)) {
+		$plugin->nagios_exit(WARNING, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' is ' . $direction . ' threshold (current: ' . $response->{$plugin->opts->objectname} . ', warning: ' . $plugin->opts->warning . ')');
 	} else {
 		$plugin->nagios_exit(OK, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' OK ('.$response->{$plugin->opts->objectname}.')');
-	}
-}
-
-sub check_threshold_below
-{
-	my $plugin = shift;
-
-	if (!defined $plugin->opts->objecttype) {
-		$plugin->nagios_die('command requires parameter for objecttype');
-	}
-
-	if (!defined $plugin->opts->objectname) {
-		$plugin->nagios_die('command requires parameter for objectname');
-	}
-
-	if (!defined $plugin->opts->warning || !defined $plugin->opts->critical) {
-		$plugin->nagios_die('command requires parameter for warning and critical');
-	}
-
-	my %params;
-	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
-	$params{'objecttype'} = $plugin->opts->objecttype;
-	$params{'objectname'} = undef;
-	$params{'options'}    = undef;
-
-	my $response = nitro_client($plugin, \%params);
-	$response = $response->{$plugin->opts->objecttype};
-
-	$plugin->add_perfdata(
-		label    => $plugin->opts->objecttype . '::' . $plugin->opts->objectname,
-		value    => $response->{$plugin->opts->objectname},
-		min      => 0,
-		max      => undef,
-		warning  => $plugin->opts->warning,
-		critical => $plugin->opts->critical,
-	);
-
-	if ($response->{$plugin->opts->objectname} <= $plugin->opts->critical) {
-		$plugin->nagios_exit(CRITICAL, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' is below threshold (current: ' . $response->{$plugin->opts->objectname} . ', critical: ' . $plugin->opts->critical . ')');
-	} elsif ($response->{$plugin->opts->objectname} <= $plugin->opts->warning) {
-		$plugin->nagios_exit(WARNING, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' is below threshold (current: ' . $response->{$plugin->opts->objectname} . ', warning: ' . $plugin->opts->warning . ')');
-	} else {
-		$plugin->nagios_exit(OK, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' ('.$response->{$plugin->opts->objectname}.')');
 	}
 }
 
@@ -552,7 +514,7 @@ sub check_sslcert
 
 	foreach $response (@{$response}) {
 		if ($response->{daystoexpiration} <= $plugin->opts->critical) {
-				$plugin->add_message(CRITICAL, $response->{certkey} . ' expires in ' . $response->{daystoexpiration} . ' days;');
+			$plugin->add_message(CRITICAL, $response->{certkey} . ' expires in ' . $response->{daystoexpiration} . ' days;');
 		} elsif ($response->{daystoexpiration} <= $plugin->opts->warning) {
 			$plugin->add_message(WARNING, $response->{certkey} . ' expires in ' . $response->{daystoexpiration} . ' days;');
 		}
