@@ -160,6 +160,9 @@ if ($plugin->opts->command eq 'state') {
 } elsif ($plugin->opts->command eq 'hwinfo') {
 	# print infos about hardware and build version
 	get_hardware_info($plugin);
+} elsif ($plugin->opts->command eq 'performancedata') {
+	# print performance data of protocol stats
+	get_performancedata($plugin);
 } elsif ($plugin->opts->command eq 'interfaces') {
 	# check the state of all interfaces
 	check_interfaces($plugin);
@@ -679,6 +682,39 @@ sub get_hardware_info
 
 	my ($code, $message) = $plugin->check_messages;
 	$plugin->nagios_exit($code, 'INFO: ' . $message);
+}
+
+sub get_performancedata
+{
+	my $plugin = shift;
+
+	my %params;
+	$params{'endpoint'}   = 'stat';
+	$params{'objecttype'} = $plugin->opts->objecttype;
+	$params{'objectname'} = undef;
+	$params{'options'}    = undef;
+
+	my $response = nitro_client($plugin, \%params);
+	$response = $response->{$params{'objecttype'}};
+
+	foreach my $objectname (split(",",$plugin->opts->objectname)) {
+		if (not defined($response->{$objectname})) {
+			$plugin->nagios_exit(UNKNOWN, 'performancedata: object name "' . $objectname . '" not found in output.');
+		}
+		$plugin->add_message(OK, $objectname .":", $response->{$objectname}. ",");
+
+		$plugin->add_perfdata(
+			label    => "'".$objectname."'",
+			value    => $response->{$objectname},
+			min      => undef,
+			max      => undef,
+			warning  => $plugin->opts->warning,
+			critical => $plugin->opts->critical,
+		);
+	}
+
+	my ($code, $message) = $plugin->check_messages;
+	$plugin->nagios_exit($code, 'performancedata: ' . $message);
 }
 
 sub check_interfaces
