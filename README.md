@@ -118,7 +118,7 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
 
 ## Get information about the netscaler
 
-    # NetScaler::Server
+    # NetScaler::HWInfo
     ./check_netscaler.pl -H ${IPADDR} -s -C hwinfo
 
 ## Check status of all network interfaces
