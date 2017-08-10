@@ -689,7 +689,7 @@ sub get_performancedata
 	my $plugin = shift;
 
 	my %params;
-	$params{'endpoint'}   = 'stat';
+	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = undef;
 	$params{'options'}    = undef;
@@ -789,19 +789,19 @@ sub check_interfaces
 		$plugin->add_message($interface_state, "device: " . $interface->{'devicename'} . ' (speed: ' . $interface_speed . ', MTU: ' . $interface->{'actualmtu'} . ', VLAN: ' . $interface->{'vlan'} . ', type: ' . $interface->{'intftype'} . ') ' . $interface->{'state'} . ';');
 
 		$plugin->add_perfdata(
-			label    => "\'".$interface->{'devicename'} . "_rxbytes'",
+			label    => "\'".$interface->{'devicename'} . ".rxbytes'",
 			value    => $interface->{'rxbytes'}."B"
 		);
 		$plugin->add_perfdata(
-			label    => "\'".$interface->{'devicename'} . "_txbytes'",
+			label    => "\'".$interface->{'devicename'} . ".txbytes'",
 			value    => $interface->{'txbytes'}."B"
 		);
 		$plugin->add_perfdata(
-			label    => "\'".$interface->{'devicename'} . "rxerrors'",
+			label    => "\'".$interface->{'devicename'} . ".rxerrors'",
 			value    => $interface->{'rxerrors'}."c"
 		);
 		$plugin->add_perfdata(
-			label    => "\'".$interface->{'devicename'} . "txerrors'",
+			label    => "\'".$interface->{'devicename'} . ".txerrors'",
 			value    => $interface->{'txerrors'}."c"
 		);
 	}
