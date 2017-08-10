@@ -3,6 +3,7 @@
 - added command hwinfo to just print information about the Netscaler itself
 - added command interfaces to check state of all interfaces and add performance data for each interface
 - added command to request performance data
+- added command to check the state of a servicegroup and its members
 - added Icinga2 config templates
 
 ## 1.1.1 (2017-06-10)
