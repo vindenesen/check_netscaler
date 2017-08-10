@@ -10,6 +10,9 @@ Currently the plugin has the following subcommands:
 - **sslcert:** check the lifetime for installed ssl certificates
 - **nsconfig:** check for configuration changes which are not saved to disk
 - **staserver:** check if configured STA servers are available
+- **server:** check status of Load Balancing Servers
+- **hwinfo:** just print information about the Netscaler itself
+- **interfaces:** check state of all interfaces and add performance data for each interface
 - **debug:** debug command, print all data for a endpoint
 
 This plugin works with VPX, MPX, SDX and CPX NetScaler Appliances. The api responses may differ by build, appliance type and your installed license.
@@ -107,6 +110,21 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
 
     # NetScaler::STA::vs_vpn_gateway
     ./check_netscaler.pl -H ${IPADDR} -s -C staserver -n vs_vpn_gateway
+
+## Check if Load Balancer server are working
+
+    # NetScaler::Server
+    ./check_netscaler.pl -H ${IPADDR} -s -C server
+
+## Get information about the netscaler
+
+    # NetScaler::Server
+    ./check_netscaler.pl -H ${IPADDR} -s -C hwinfo
+
+## Check status of all network interfaces
+
+    # NetScaler::Interfaces
+    ./check_netscaler.pl -H ${IPADDR} -s -C interfaces
 
 ## Debug command
     # Print all LB vServers (stat endpoint)
