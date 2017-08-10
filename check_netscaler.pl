@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ##############################################################################
 # check_netscaler.pl
-# Nagios Plugin for Citrix NetScaler 
+# Nagios Plugin for Citrix NetScaler
 # Simon Lauger <simon@lauger.name>
 #
 # https://github.com/slauger/check_netscaler
@@ -153,7 +153,7 @@ if ($plugin->opts->command eq 'state') {
 	# check the state of the staservers
 	check_staserver($plugin);
 } elsif ($plugin->opts->command eq 'debug') {
-	# dump the full response of the nitro api 
+	# dump the full response of the nitro api
 	check_debug($plugin);
 } else {
 	# error, unkown command given
@@ -197,19 +197,19 @@ sub nitro_client {
 
 	my $plugin  = shift;
 	my $params  = shift;
-		
+
 	my $lwp = LWP::UserAgent->new(
-		env_proxy => 1, 
-		keep_alive => 1, 
-		timeout => $plugin->opts->timeout, 
-		ssl_opts => { 
-			verify_hostname => 0, 
+		env_proxy => 1,
+		keep_alive => 1,
+		timeout => $plugin->opts->timeout,
+		ssl_opts => {
+			verify_hostname => 0,
 			SSL_verify_mode => 0
 		},
 	);
-	
+
 	my $protocol = undef;
-	
+
 	if ($plugin->opts->ssl) {
 		$protocol = 'https://';
 	} else {
@@ -229,58 +229,58 @@ sub nitro_client {
 	if ($params->{'objectname'} && $params->{'objectname'} ne '') {
 		$url  = $url . '/' . uri_escape(uri_escape($params->{'objectname'}));
 	}
-	
+
 	if ($params->{'options'} && $params->{'options'} ne '') {
 		$url = $url . '?' . $params->{'options'};
 	}
-	
+
 	if ($plugin->opts->verbose) {
 		print "debug: target url is " . $url . "\n";
 	}
-	
+
 	my $request = HTTP::Request->new(GET => $url);
-		
+
 	$request->header('X-NITRO-USER', $plugin->opts->username);
 	$request->header('X-NITRO-PASS', $plugin->opts->password);
 	$request->header('Content-Type', 'application/vnd.com.citrix.netscaler.' . $params->{'objecttype'} . '+json');
-	
+
 	my $response = $lwp->request($request);
-	
+
 	if ($plugin->opts->verbose) {
 		print "debug: response of request is:\n";
 		print Dumper($response->content);
 	}
-	
+
 	if (HTTP::Status::is_error($response->code)) {
 		$plugin->nagios_die($response->content);
 	} else {
 		$response = JSON->new->allow_blessed->convert_blessed->decode($response->content);
 	}
-	
+
 	return $response;
 }
 
 sub check_state
 {
 	my $plugin = shift;
-	
+
 	if (!defined $plugin->opts->objecttype) {
 		$plugin->nagios_die('command requires objecttype parameter');
 	}
-	
+
 	my %counter;
-	
+
 	$counter{'up'}     = 0;
 	$counter{'down'}   = 0;
 	$counter{'oos'}    = 0;
 	$counter{'unkown'} = 0;
 
 	my %params;
-	
+
 	my $field_name;
 	my $field_state;
-	
-	# well, i guess the citrix api developers were drunk 
+
+	# well, i guess the citrix api developers were drunk
 	if ($plugin->opts->objecttype eq 'service') {
 		$params{'endpoint'} = $plugin->opts->endpoint || 'config';
 		$field_name  = 'name';
@@ -294,14 +294,14 @@ sub check_state
 		$field_name  = 'name';
 		$field_state = 'state';
 	}
-	
+
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = $plugin->opts->objectname;
 	$params{'options'}    = undef;
 
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->objecttype};
-	
+
 	foreach my $response (@{$response}) {
 		if ($response->{$field_state} eq 'UP') {
 			$counter{'up'}++;
@@ -321,11 +321,11 @@ sub check_state
 			$counter{'unkown'}++;
 			$plugin->add_message(CRITICAL, $response->{$field_name} . ' unknown;');
 		}
-	}		
+	}
 	my ($code, $message) = $plugin->check_messages;
-	
+
 	my $stats = ' (' . $counter{'up'} . ' up, ' . $counter{'down'} . ' down, ' . $counter{'oos'} . ' oos, ' . $counter{'unkown'} . ' unkown)';
-	
+
 	$plugin->add_perfdata(
 		label => 'up',
 		value => $counter{'up'},
@@ -364,11 +364,11 @@ sub check_state
 sub check_string
 {
 	my $plugin = shift;
-	
+
 	if (!defined $plugin->opts->objecttype) {
 		$plugin->nagios_die('command requires parameter for objecttype');
 	}
-	
+
 	if (!defined $plugin->opts->objectname) {
 		$plugin->nagios_die('command requires parameter for objectname');
 	}
@@ -382,7 +382,7 @@ sub check_string
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = undef;
 	$params{'options'}    = undef;
-	
+
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->objecttype};
 
@@ -398,11 +398,11 @@ sub check_string
 sub check_string_not
 {
 	my $plugin = shift;
-	
+
 	if (!defined $plugin->opts->objecttype) {
 		$plugin->nagios_die('command requires parameter for objecttype');
 	}
-	
+
 	if (!defined $plugin->opts->objectname) {
 		$plugin->nagios_die('command requires parameter for objectname');
 	}
@@ -416,13 +416,13 @@ sub check_string_not
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = undef;
 	$params{'options'}    = undef;
-	
+
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->objecttype};
-		
+
 	if ($response->{$plugin->opts->objectname} ne $plugin->opts->critical) {
 		$plugin->nagios_exit(CRITICAL, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' not matches keyword (current: ' . $response->{$plugin->opts->objectname} . ', critical: ' . $plugin->opts->critical . ')');
-	} elsif ($response->{$plugin->opts->objectname} ne $plugin->opts->warning) { 
+	} elsif ($response->{$plugin->opts->objectname} ne $plugin->opts->warning) {
 		$plugin->nagios_exit(WARNING, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' not matches keyword (current: ' . $response->{$plugin->opts->objectname} . ', warning: ' . $plugin->opts->warning . ')');
 	} else {
 		$plugin->nagios_exit(OK, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' OK ('.$response->{$plugin->opts->objectname}.')');
@@ -436,7 +436,7 @@ sub check_threshold_above
 	if (!defined $plugin->opts->objecttype) {
 		$plugin->nagios_die('command requires parameter for objecttype');
 	}
-			
+
 	if (!defined $plugin->opts->objectname) {
 		$plugin->nagios_die('command requires parameter for objectname');
 	}
@@ -450,7 +450,7 @@ sub check_threshold_above
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = undef;
 	$params{'options'}    = undef;
-	
+
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->objecttype};
 
@@ -476,11 +476,11 @@ sub check_threshold_above
 sub check_threshold_below
 {
 	my $plugin = shift;
-	
+
 	if (!defined $plugin->opts->objecttype) {
 		$plugin->nagios_die('command requires parameter for objecttype');
 	}
-	
+
 	if (!defined $plugin->opts->objectname) {
 		$plugin->nagios_die('command requires parameter for objectname');
 	}
@@ -494,7 +494,7 @@ sub check_threshold_below
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = undef;
 	$params{'options'}    = undef;
-	
+
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->objecttype};
 
@@ -519,11 +519,11 @@ sub check_threshold_below
 sub check_sslcert
 {
 	my $plugin = shift;
-	
+
 	if (!defined $plugin->opts->warning || !defined $plugin->opts->critical) {
 		$plugin->nagios_die('command requires parameter for warning and critical');
 	}
-	
+
 	my %params;
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
 	$params{'objecttype'} = $plugin->opts->objecttype || 'sslcertkey';
@@ -540,9 +540,9 @@ sub check_sslcert
 			$plugin->add_message(WARNING, $response->{certkey} . ' expires in ' . $response->{daystoexpiration} . ' days;');
 		}
 	}
-	
+
 	my ($code, $message) = $plugin->check_messages;
-	
+
 	if ($code == OK) {
 		$plugin->nagios_exit($code, 'sslcertkey OK');
 	} else {
@@ -553,7 +553,7 @@ sub check_sslcert
 sub check_staserver
 {
 	my $plugin = shift;
-	
+
 	my %params;
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
 	$params{'objectname'} = $plugin->opts->objectname || '';
@@ -564,13 +564,13 @@ sub check_staserver
 	} else {
 		$params{'objecttype'} = $plugin->opts->objecttype || 'vpnvserver_staserver_binding';
 	}
-		
+
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$params{'objecttype'}};
-	
+
 	# return critical if all staservers are down at once
 	my $critical = 1;
-	
+
 	# check if any stas are in down state
 	foreach $response (@{$response}) {
 		if ($response->{'staauthid'} eq '') {
@@ -580,9 +580,9 @@ sub check_staserver
 			$critical = 0;
 		}
 	}
-	
+
 	my ($code, $message) = $plugin->check_messages;
-	
+
 	if ($critical) {
 		$plugin->nagios_exit(CRITICAL, 'staservice ' . $message);
 	} else {
@@ -593,7 +593,7 @@ sub check_staserver
 sub check_nsconfig
 {
 	my $plugin = shift;
-	
+
 	my %params;
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
 	$params{'objecttype'} = $plugin->opts->objecttype || 'nsconfig';
@@ -602,7 +602,7 @@ sub check_nsconfig
 
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$params{'objecttype'}};
-		
+
 	if (!defined $response->{'configchanged'} || $response->{'configchanged'}) {
 		$plugin->nagios_exit(WARNING, 'nsconfig::configchanged unsaved configuration changes');
 	} else {
@@ -613,14 +613,14 @@ sub check_nsconfig
 sub check_debug
 {
 	my $plugin = shift;
-	
+
 	my %params;
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = $plugin->opts->objectname;
 	$params{'options'}    = undef;
-	
+
 	my $response = nitro_client($plugin, \%params);
-	
+
 	print Dumper($response);
 }
