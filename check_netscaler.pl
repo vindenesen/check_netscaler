@@ -152,6 +152,15 @@ if ($plugin->opts->command eq 'state') {
 } elsif ($plugin->opts->command eq 'staserver') {
 	# check the state of the staservers
 	check_staserver($plugin);
+} elsif ($plugin->opts->command eq 'server') {
+	# check the state of the servers
+	check_server($plugin);
+} elsif ($plugin->opts->command eq 'hwinfo') {
+	# print infos about hardware and build version
+	get_hardware_info($plugin);
+} elsif ($plugin->opts->command eq 'interfaces') {
+	# check the state of all interfaces
+	check_interfaces($plugin);
 } elsif ($plugin->opts->command eq 'debug') {
 	# dump the full response of the nitro api
 	check_debug($plugin);
@@ -583,11 +592,42 @@ sub check_staserver
 
 	my ($code, $message) = $plugin->check_messages;
 
-	if ($critical) {
-		$plugin->nagios_exit(CRITICAL, 'staservice ' . $message);
-	} else {
-		$plugin->nagios_exit($code, 'staservice ' . $message);
+	if ( $critical == 1) { $code = CRITICAL ; }
+
+	$plugin->nagios_exit($code, 'server ' . $message);
+}
+
+sub check_server
+{
+	my $plugin = shift;
+
+	my %params;
+	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
+	$params{'objectname'} = $plugin->opts->objectname || '';
+	$params{'options'}    = undef;
+	$params{'objecttype'} = "server";
+
+	my $response = nitro_client($plugin, \%params);
+	$response = $response->{$params{'objecttype'}};
+
+	# return critical if all staservers are down at once
+	my $critical = 1;
+
+	# check if any stas are in down state
+	foreach $response (@{$response}) {
+		if ($response->{'state'} ne 'ENABLED') {
+			$plugin->add_message(WARNING, $response->{'name'} . ' ' . $response->{'state'} . ' ;');
+		} else {
+			$plugin->add_message(OK, $response->{'name'} . ' ' . $response->{'state'} . ' ;');
+			$critical = 0;
+		}
 	}
+
+	my ($code, $message) = $plugin->check_messages;
+
+	if ( $critical == 1) { $code = CRITICAL ; }
+
+	$plugin->nagios_exit($code, 'server ' . $message);
 }
 
 sub check_nsconfig
@@ -608,6 +648,95 @@ sub check_nsconfig
 	} else {
 		$plugin->nagios_exit(OK, 'nsconfig::configchanged OK');
 	}
+}
+
+sub get_hardware_info
+{
+	my $plugin = shift;
+
+	my %params;
+	$params{'endpoint'}   = 'config';
+	$params{'objecttype'} = 'nshardware';
+	$params{'objectname'} = undef;
+	$params{'options'}    = undef;
+
+	my $response = nitro_client($plugin, \%params);
+	$response = $response->{$params{'objecttype'}};
+
+	$plugin->add_message(OK, "Platform: " . $response->{'hwdescription'} . ' ' . $response->{'sysid'} . ';');
+	$plugin->add_message(OK, "Manufactured on: " . $response->{'manufactureyear'} . '/' . $response->{'manufacturemonth'} . '/' . $response->{'manufactureday'} . ';');
+	$plugin->add_message(OK, "CPU: " . $response->{'cpufrequncy'} . 'MHz;');
+	$plugin->add_message(OK, "Serial no: " . $response->{'serialno'} . ';');
+
+	$params{'objecttype'} = 'nsversion';
+
+	$response = nitro_client($plugin, \%params);
+	$response = $response->{$params{'objecttype'}};
+
+	$plugin->add_message(OK, "Build Version: " . $response->{'version'} . ';');
+
+	my ($code, $message) = $plugin->check_messages;
+	$plugin->nagios_exit($code, 'INFO: ' . $message);
+}
+
+sub check_interfaces
+{
+	my $plugin = shift;
+	my @interface_errors;
+
+	my %params;
+	$params{'endpoint'}   = 'config';
+	$params{'objecttype'} = 'interface';
+	$params{'objectname'} = undef;
+	$params{'options'}    = undef;
+
+	my $response = nitro_client($plugin, \%params);
+
+	foreach my $interface (@{$response->{'Interface'}}) {
+
+		my $interface_state = OK;
+
+		my $interface_speed = "N/A";
+		if ($interface->{'actspeed'}) { $interface_speed = $interface->{'actspeed'}; }
+
+		if ($interface->{'linkstate'} != 1 ) {
+			push(@interface_errors, "interface " . $interface->{'devicename'} . " has linkstate \"DOWN\"");
+			$interface_state = CRITICAL;
+		}
+		if ($interface->{'intfstate'} != 1 ) {
+			push(@interface_errors, "interface " . $interface->{'devicename'} . " has intstate \"DOWN\"");
+			$interface_state = CRITICAL;
+		}
+		if ($interface->{'state'} ne "ENABLED" ) {
+			push(@interface_errors, "interface " . $interface->{'devicename'} . " has state \"".$interface->{'state'}."\"");
+			$interface_state = CRITICAL;
+		}
+
+		$plugin->add_message($interface_state, "device: " . $interface->{'devicename'} . ' (speed: ' . $interface_speed . ', MTU: ' . $interface->{'actualmtu'} . ', VLAN: ' . $interface->{'vlan'} . ', type: ' . $interface->{'intftype'} . ') ' . $interface->{'state'} . ';');
+
+		$plugin->add_perfdata(
+			label    => "\'".$interface->{'devicename'} . "_rxbytes'",
+			value    => $interface->{'rxbytes'}."B"
+		);
+		$plugin->add_perfdata(
+			label    => "\'".$interface->{'devicename'} . "_txbytes'",
+			value    => $interface->{'txbytes'}."B"
+		);
+		$plugin->add_perfdata(
+			label    => "\'".$interface->{'devicename'} . "rxerrors'",
+			value    => $interface->{'rxerrors'}."c"
+		);
+		$plugin->add_perfdata(
+			label    => "\'".$interface->{'devicename'} . "txerrors'",
+			value    => $interface->{'txerrors'}."c"
+		);
+	}
+
+	my ($code, $message) = $plugin->check_messages;
+	if (scalar @interface_errors != 0 ) {
+		$message = join(", ",@interface_errors). " - ". $message
+	}
+	$plugin->nagios_exit($code, 'Interfaces: ' . $message);
 }
 
 sub check_debug
