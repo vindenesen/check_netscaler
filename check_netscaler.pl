@@ -6,7 +6,7 @@
 #
 # https://github.com/slauger/check_netscaler
 #
-# Version: 1.2 (2017-XX-XX)
+# Version: 1.2.0 (2017-XX-XX)
 #
 # Copyright 2015-2017 Simon Lauger
 #
@@ -618,9 +618,9 @@ sub check_server
 	# check if any stas are in down state
 	foreach $response (@{$response}) {
 		if ($response->{'state'} ne 'ENABLED') {
-			$plugin->add_message(WARNING, $response->{'name'} . ' ' . $response->{'state'} . ' ;');
+			$plugin->add_message(WARNING, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ' ;');
 		} else {
-			$plugin->add_message(OK, $response->{'name'} . ' ' . $response->{'state'} . ' ;');
+			$plugin->add_message(OK, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ' ;');
 			$critical = 0;
 		}
 	}
