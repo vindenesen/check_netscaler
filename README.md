@@ -13,6 +13,7 @@ Currently the plugin has the following subcommands:
 - **server:** check status of Load Balancing Servers
 - **hwinfo:** just print information about the Netscaler itself
 - **interfaces:** check state of all interfaces and add performance data for each interface
+- **performancedata:** gather performancedata from all sorts of API endpoints
 - **debug:** debug command, print all data for a endpoint
 
 This plugin works with VPX, MPX, SDX and CPX NetScaler Appliances. The api responses may differ by build, appliance type and your installed license.
@@ -125,6 +126,25 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
 
     # NetScaler::Interfaces
     ./check_netscaler.pl -H ${IPADDR} -s -C interfaces
+
+## Request performance data
+##### all fields must be defined via "-n" option and be seperated with a comma
+
+    # NetScaler::Performancedata on Cache hit/misses
+    ./check_netscaler.pl -H ${IPADDR} -s -C performancedata -o ns -n cachetothits,cachetotmisses
+
+    # NetScaler::Performancedata on tcp connections
+    ./check_netscaler.pl -H ${IPADDR} -s -C performancedata -o ns -n tcpcurclientconn,tcpcurclientconnestablished,tcpcurserverconn,tcpcurserverconnestablished
+
+    # find more object names to check out for object type "ns"
+    /check_netscaler.pl -H ${IPADDR} -s -C debug -o ns
+
+    # more interesting performance data object types
+    * ns
+    * cache
+    * protocolhttp
+    * protocolip
+    * protocoltcp
 
 ## Debug command
     # Print all LB vServers (stat endpoint)
