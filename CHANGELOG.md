@@ -1,3 +1,9 @@
+## 1.2.0 (2017-XX-XX)
+- added command server to check status of Load Balancing Servers
+- added command hwinfo to just print information about the Netscaler itself
+- added command interfaces to check state of all interfaces and add performance data for each interface
+- added Icinga2 config templates
+
 ## 1.1.1 (2017-06-10)
 - bugfix for servicegroups in 12.0 (#12)
 - new option to connect to an alternate port (for CPX instances)
