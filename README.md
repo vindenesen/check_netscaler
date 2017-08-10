@@ -11,6 +11,7 @@ Currently the plugin has the following subcommands:
 - **nsconfig:** check for configuration changes which are not saved to disk
 - **staserver:** check if configured STA servers are available
 - **server:** check status of Load Balancing Servers
+- **servicegroup:** check the state of a servicegroup and its members
 - **hwinfo:** just print information about the Netscaler itself
 - **interfaces:** check state of all interfaces and add performance data for each interface
 - **performancedata:** gather performancedata from all sorts of API endpoints
@@ -116,6 +117,11 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
 
     # NetScaler::Server
     ./check_netscaler.pl -H ${IPADDR} -s -C server
+
+## Check status of a service group
+
+    # NetScaler::Servicegroup::vs_vpn_gateway
+    ./check_netscaler.pl -H ${IPADDR} -s -C servicegroup -n vs_vpn_gateway
 
 ## Get information about the netscaler
 
