@@ -166,6 +166,9 @@ if ($plugin->opts->command eq 'state') {
 } elsif ($plugin->opts->command eq 'interfaces') {
 	# check the state of all interfaces
 	check_interfaces($plugin);
+} elsif ($plugin->opts->command eq 'servicegroup') {
+	# check the state of a servicegroup and its members
+	check_servicegroup($plugin);
 } elsif ($plugin->opts->command eq 'debug') {
 	# dump the full response of the nitro api
 	check_debug($plugin);
@@ -695,7 +698,7 @@ sub get_performancedata
 	$params{'options'}    = undef;
 
 	if (not defined ($plugin->opts->objectname)) {
-		$plugin->nagios_exit(UNKNOWN, 'performancedata: no object name(s) \"-n\" set');
+		$plugin->nagios_exit(UNKNOWN, 'performancedata: no object name(s) "-n" set');
 	}
 
 	my $response = nitro_client($plugin, \%params);
@@ -811,6 +814,74 @@ sub check_interfaces
 		$message = join(", ",@interface_errors). " - ". $message
 	}
 	$plugin->nagios_exit($code, 'Interfaces: ' . $message);
+}
+
+sub check_servicegroup
+{
+	my $plugin = shift;
+	my @servicegroup_errors;
+
+	my %params;
+	$params{'endpoint'}   = 'config';
+	$params{'objecttype'} = 'servicegroup';
+	$params{'objectname'} = $plugin->opts->objectname;
+	$params{'options'}    = undef;
+
+	if (not defined ($plugin->opts->objectname)) {
+		$plugin->nagios_exit(UNKNOWN, 'servicegroup: no object name "-n" set');
+	}
+
+	my %servicegroup_states;
+	$servicegroup_states{"state"} = "ENABLED";
+	$servicegroup_states{"servicegroupeffectivestate"} = "UP";
+	$servicegroup_states{"monstate"} = "ENABLED";
+	$servicegroup_states{"healthmonitor"} = "YES";
+
+	my %servicegroup_member_states;
+	$servicegroup_member_states{"state"} = "ENABLED";
+	$servicegroup_member_states{"svrstate"} = "UP";
+
+	my $response = nitro_client($plugin, \%params);
+	my $servicegroup_response = $response->{$params{'objecttype'}};
+	my $servicegroup_state = OK;
+
+	# check servicegroup health status
+	foreach my $servicegroup_response (@{$servicegroup_response}) {
+
+		foreach my $servicegroup_check_key ( keys %servicegroup_states ) {
+
+			if ($servicegroup_response->{$servicegroup_check_key} ne $servicegroup_states{$servicegroup_check_key}) {
+				push(@servicegroup_errors, 'servicegroup ' . $servicegroup_response->{"servicegroupname"} . ' "'. $servicegroup_check_key . '" is: '. $servicegroup_states{$servicegroup_check_key});
+				$servicegroup_state = CRITICAL;
+			}
+		}
+		$plugin->add_message(OK, $servicegroup_response->{'servicegroupname'} . ' (' . $servicegroup_response->{'servicetype'} . ') - state: ' . $servicegroup_response->{'servicegroupeffectivestate'} . ' -');
+	}
+
+	# get servicegroup members status
+	$params{'objecttype'} = 'servicegroup_servicegroupmember_binding';
+
+	$response = nitro_client($plugin, \%params);
+	my $servicegroup_members_response = $response->{$params{'objecttype'}};
+
+	# check servicegroup members health status
+	foreach my $servicegroup_members_response (@{$servicegroup_members_response}) {
+
+		foreach my $servicegroup_members_check_key ( keys %servicegroup_member_states ) {
+
+			if ($servicegroup_members_response->{$servicegroup_members_check_key} ne $servicegroup_member_states{$servicegroup_members_check_key}) {
+				push(@servicegroup_errors, 'servicegroup member ' . $servicegroup_members_response->{"servername"} . ' "'. $servicegroup_members_check_key . '" is: '. $servicegroup_member_states{$servicegroup_members_check_key});
+				$servicegroup_state = CRITICAL;
+			}
+		}
+		$plugin->add_message(OK, $servicegroup_members_response->{'servername'} . ' (' . $servicegroup_members_response->{'ip'}.':'. $servicegroup_members_response->{'port'} . ') - state: ' . $servicegroup_members_response->{'svrstate'} .',');
+	}
+
+	my ($code, $message) = $plugin->check_messages;
+	if (scalar @servicegroup_errors != 0 ) {
+		$message = join(", ",@servicegroup_errors). " - ". $message
+	}
+	$plugin->nagios_exit($servicegroup_state, 'servicegroup: ' . $message);
 }
 
 sub check_debug
