@@ -6,6 +6,8 @@
 #
 # https://github.com/slauger/check_netscaler
 #
+# Version: 1.2 (2017-XX-XX)
+#
 # Copyright 2015-2017 Simon Lauger
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
