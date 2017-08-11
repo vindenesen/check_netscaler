@@ -119,9 +119,9 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
     ./check_netscaler.pl -H ${IPADDR} -s -C server
 
 ## Check status of a service group
-
+##### define member quorum (in percent) with warning and critical values
     # NetScaler::Servicegroup::vs_vpn_gateway
-    ./check_netscaler.pl -H ${IPADDR} -s -C servicegroup -n vs_vpn_gateway
+    ./check_netscaler.pl -H ${IPADDR} -s -C servicegroup -n vs_vpn_gateway -w 75 -c 50
 
 ## Get information about the netscaler
 
@@ -141,6 +141,9 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
 
     # NetScaler::Performancedata on tcp connections
     ./check_netscaler.pl -H ${IPADDR} -s -C performancedata -o ns -n tcpcurclientconn,tcpcurclientconnestablished,tcpcurserverconn,tcpcurserverconnestablished
+
+    # NetScaler::Performancedata on network interfaces
+    ./check_netscaler.pl -H ${IPADDR} -s -C performancedata -o Interface -n id.totrxbytes
 
     # find more object names to check out for object type "ns"
     /check_netscaler.pl -H ${IPADDR} -s -C debug -o ns
@@ -177,8 +180,10 @@ username=nagios
 password=password
 ```
 
-# Contributors
+# Authors
 - @slauger
+
+# Contributors
 - @macampo
 - @Velociraptor85
 - @bb-ricardo
