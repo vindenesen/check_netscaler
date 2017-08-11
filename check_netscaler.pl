@@ -141,10 +141,10 @@ if ($plugin->opts->command eq 'state') {
 	check_threshold($plugin, $plugin->opts->command);
 } elsif ($plugin->opts->command eq 'string') {
 	# check if a response does contains a specific string
-	check_string($plugin);
+	check_string($plugin, "matches");
 } elsif ($plugin->opts->command eq 'string_not') {
 	# check if a response does not contains a specific string
-	check_string_not($plugin);
+	check_string($plugin, "matches not");
 } elsif ($plugin->opts->command eq 'sslcert') {
 	# check for the lifetime of installed certificates
 	check_sslcert($plugin);
@@ -381,6 +381,7 @@ sub check_state
 sub check_string
 {
 	my $plugin = shift;
+	my $type_of_string_comparison = shift;
 
 	if (!defined $plugin->opts->objecttype) {
 		$plugin->nagios_die('command requires parameter for objecttype');
@@ -394,38 +395,8 @@ sub check_string
 		$plugin->nagios_die('command requires parameter for warning and critical');
 	}
 
-	my %params;
-	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
-	$params{'objecttype'} = $plugin->opts->objecttype;
-	$params{'objectname'} = undef;
-	$params{'options'}    = undef;
-
-	my $response = nitro_client($plugin, \%params);
-	$response = $response->{$plugin->opts->objecttype};
-
-	if ($response->{$plugin->opts->objectname} eq $plugin->opts->critical) {
-		$plugin->nagios_exit(CRITICAL, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' matches keyword (current: ' . $response->{$plugin->opts->objectname} . ', critical: ' . $plugin->opts->critical . ')');
-	} elsif ($response->{$plugin->opts->objectname} eq $plugin->opts->warning) {
-		$plugin->nagios_exit(WARNING, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' matches keyword (current: ' . $response->{$plugin->opts->objectname} . ', warning: ' . $plugin->opts->warning . ')');
-	} else {
-		$plugin->nagios_exit(OK, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' OK ('.$response->{$plugin->opts->objectname}.')');
-	}
-}
-
-sub check_string_not
-{
-	my $plugin = shift;
-
-	if (!defined $plugin->opts->objecttype) {
-		$plugin->nagios_die('command requires parameter for objecttype');
-	}
-
-	if (!defined $plugin->opts->objectname) {
-		$plugin->nagios_die('command requires parameter for objectname');
-	}
-
-	if (!defined $plugin->opts->warning || !defined $plugin->opts->critical) {
-		$plugin->nagios_die('command requires parameter for warning and critical');
+	if ($type_of_string_comparison ne "matches" && $type_of_string_comparison ne "matches not") {
+		$plugin->nagios_die('string can only be checked for "matches" and "matches not"');
 	}
 
 	my %params;
@@ -437,10 +408,10 @@ sub check_string_not
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->objecttype};
 
-	if ($response->{$plugin->opts->objectname} ne $plugin->opts->critical) {
-		$plugin->nagios_exit(CRITICAL, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' not matches keyword (current: ' . $response->{$plugin->opts->objectname} . ', critical: ' . $plugin->opts->critical . ')');
-	} elsif ($response->{$plugin->opts->objectname} ne $plugin->opts->warning) {
-		$plugin->nagios_exit(WARNING, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' not matches keyword (current: ' . $response->{$plugin->opts->objectname} . ', warning: ' . $plugin->opts->warning . ')');
+	if (($type_of_string_comparison eq "matches" && $response->{$plugin->opts->objectname} eq $plugin->opts->critical) || ($type_of_string_comparison eq "matches not" && $response->{$plugin->opts->objectname} ne $plugin->opts->critical)) {
+		$plugin->nagios_exit(CRITICAL, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' ' . $type_of_string_comparison . ' keyword (current: ' . $response->{$plugin->opts->objectname} . ', critical: ' . $plugin->opts->critical . ')');
+	} elsif (($type_of_string_comparison eq "matches" && $response->{$plugin->opts->objectname} eq $plugin->opts->warning) || ($type_of_string_comparison eq "matches not" && $response->{$plugin->opts->objectname} ne $plugin->opts->warning)) {
+		$plugin->nagios_exit(WARNING, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' ' . $type_of_string_comparison . ' keyword (current: ' . $response->{$plugin->opts->objectname} . ', warning: ' . $plugin->opts->warning . ')');
 	} else {
 		$plugin->nagios_exit(OK, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' OK ('.$response->{$plugin->opts->objectname}.')');
 	}
