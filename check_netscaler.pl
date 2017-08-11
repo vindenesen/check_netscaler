@@ -35,7 +35,7 @@ use Nagios::Plugin;
 my $plugin = Nagios::Plugin->new(
 	plugin		=> 'check_netscaler',
 	shortname	=> 'NetScaler',
-	version		=> '1.1.1',
+	version		=> '1.2.X',
 	url			=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX/CPX)',
 	usage		=> 'Usage: %s -H <hostname> [ -u <username> ] [ -p <password> ]
@@ -120,6 +120,12 @@ my @args = (
 		spec => 'critical|c=s',
 		usage => '-c, --critical=STRING',
 		desc => 'Value for critical',
+		required => 0,
+	},
+	{
+		spec => 'urlopts|x=s',
+		usage => '-x, --urlopts=STRING',
+		desc => 'DEBUG ONLY: add additional url options',
 		required => 0,
 	},
 );
@@ -864,7 +870,7 @@ sub check_debug
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = $plugin->opts->objectname;
-	$params{'options'}    = undef;
+	$params{'options'}    = $plugin->opts->urlopts;
 
 	my $response = nitro_client($plugin, \%params);
 
