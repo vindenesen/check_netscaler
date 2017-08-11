@@ -682,10 +682,10 @@ sub get_performancedata
 					$plugin->nagios_exit(UNKNOWN, 'performancedata: object name "' . $objectname_name . '" not found in output.');
 				}
 
-				$plugin->add_message(OK, $response->{$objectname_id} .".". $objectname_name .":", $response->{$objectname_name}. ",");
+				$plugin->add_message(OK, $params{'objecttype'} . "." . $response->{$objectname_id} . "." . $objectname_name . ":" . $response->{$objectname_name} . ",");
 
 				$plugin->add_perfdata(
-					label    => "'". $response->{$objectname_id} .".". $objectname_name."'",
+					label    => "'" . $params{'objecttype'} . "." . $response->{$objectname_id} . "." . $objectname_name . "'",
 					value    => $response->{$objectname_name},
 					min      => undef,
 					max      => undef,
@@ -699,10 +699,10 @@ sub get_performancedata
 			if (not defined($response->{$objectname})) {
 				$plugin->nagios_exit(UNKNOWN, 'performancedata: object name "' . $objectname . '" not found in output.');
 			}
-			$plugin->add_message(OK, $objectname .":", $response->{$objectname}. ",");
+			$plugin->add_message(OK, $params{'objecttype'} . "." . $objectname .":", $response->{$objectname}. ",");
 
 			$plugin->add_perfdata(
-				label    => "'".$objectname."'",
+				label    => "'" . $params{'objecttype'} . "." . $objectname . "'",
 				value    => $response->{$objectname},
 				min      => undef,
 				max      => undef,
