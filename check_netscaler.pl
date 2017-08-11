@@ -783,6 +783,12 @@ sub check_servicegroup
 	my $plugin = shift;
 	my @servicegroup_errors;
 
+	# define quorum (in percent) of working servicegroup members
+	my $member_quorum_warning = $plugin->opts->warning || "90";
+	my $member_quorum_critical = $plugin->opts->critical || "50";
+
+	my %member_state;
+
 	my %params;
 	$params{'endpoint'}   = 'config';
 	$params{'objecttype'} = 'servicegroup';
@@ -790,18 +796,18 @@ sub check_servicegroup
 	$params{'options'}    = undef;
 
 	if (not defined ($plugin->opts->objectname)) {
-		$plugin->nagios_exit(UNKNOWN, 'servicegroup: no object name "-n" set');
+		$plugin->nagios_die('servicegroup: no object name "-n" set');
 	}
 
-	my %servicegroup_states;
-	$servicegroup_states{"state"} = "ENABLED";
-	$servicegroup_states{"servicegroupeffectivestate"} = "UP";
-	$servicegroup_states{"monstate"} = "ENABLED";
-	$servicegroup_states{"healthmonitor"} = "YES";
+	my %healthy_servicegroup_states;
+	$healthy_servicegroup_states{"state"} = "ENABLED";
+	$healthy_servicegroup_states{"servicegroupeffectivestate"} = "UP";
+	$healthy_servicegroup_states{"monstate"} = "ENABLED";
+	$healthy_servicegroup_states{"healthmonitor"} = "YES";
 
-	my %servicegroup_member_states;
-	$servicegroup_member_states{"state"} = "ENABLED";
-	$servicegroup_member_states{"svrstate"} = "UP";
+	my %healthy_servicegroup_member_states;
+	$healthy_servicegroup_member_states{"state"} = "ENABLED";
+	$healthy_servicegroup_member_states{"svrstate"} = "UP";
 
 	my $response = nitro_client($plugin, \%params);
 	my $servicegroup_response = $response->{$params{'objecttype'}};
@@ -810,11 +816,10 @@ sub check_servicegroup
 	# check servicegroup health status
 	foreach my $servicegroup_response (@{$servicegroup_response}) {
 
-		foreach my $servicegroup_check_key ( keys %servicegroup_states ) {
+		foreach my $servicegroup_check_key ( keys %healthy_servicegroup_states ) {
 
-			if ($servicegroup_response->{$servicegroup_check_key} ne $servicegroup_states{$servicegroup_check_key}) {
-				push(@servicegroup_errors, 'servicegroup ' . $servicegroup_response->{"servicegroupname"} . ' "'. $servicegroup_check_key . '" is: '. $servicegroup_states{$servicegroup_check_key});
-				$servicegroup_state = CRITICAL;
+			if ($servicegroup_response->{$servicegroup_check_key} ne $healthy_servicegroup_states{$servicegroup_check_key}) {
+				push(@servicegroup_errors, 'servicegroup ' . $servicegroup_response->{"servicegroupname"} . ' "'. $servicegroup_check_key . '" is: '. $healthy_servicegroup_states{$servicegroup_check_key});
 			}
 		}
 		$plugin->add_message(OK, $servicegroup_response->{'servicegroupname'} . ' (' . $servicegroup_response->{'servicetype'} . ') - state: ' . $servicegroup_response->{'servicegroupeffectivestate'} . ' -');
@@ -829,15 +834,49 @@ sub check_servicegroup
 	# check servicegroup members health status
 	foreach my $servicegroup_members_response (@{$servicegroup_members_response}) {
 
-		foreach my $servicegroup_members_check_key ( keys %servicegroup_member_states ) {
+		foreach my $servicegroup_members_check_key ( keys %healthy_servicegroup_member_states ) {
 
-			if ($servicegroup_members_response->{$servicegroup_members_check_key} ne $servicegroup_member_states{$servicegroup_members_check_key}) {
-				push(@servicegroup_errors, 'servicegroup member ' . $servicegroup_members_response->{"servername"} . ' "'. $servicegroup_members_check_key . '" is: '. $servicegroup_member_states{$servicegroup_members_check_key});
-				$servicegroup_state = CRITICAL;
+			if ($servicegroup_members_response->{$servicegroup_members_check_key} ne $healthy_servicegroup_member_states{$servicegroup_members_check_key}) {
+				push(@servicegroup_errors, 'servicegroup member ' . $servicegroup_members_response->{"servername"} . ' "'. $servicegroup_members_check_key . '" is '. $healthy_servicegroup_member_states{$servicegroup_members_check_key});
+				$member_state{$servicegroup_members_response->{"servername"}} = "DOWN";
 			}
 		}
-		$plugin->add_message(OK, $servicegroup_members_response->{'servername'} . ' (' . $servicegroup_members_response->{'ip'}.':'. $servicegroup_members_response->{'port'} . ') - state: ' . $servicegroup_members_response->{'svrstate'} .',');
+		if (not defined $member_state{$servicegroup_members_response->{"servername"}}) {
+			$member_state{$servicegroup_members_response->{"servername"}} = "UP";
+		}
+		$plugin->add_message(OK, $servicegroup_members_response->{'servername'} . ' (' . $servicegroup_members_response->{'ip'}.':'. $servicegroup_members_response->{'port'} . ') is ' . $servicegroup_members_response->{'svrstate'} .',');
 	}
+
+	# count states
+	my $members_up = 0;
+	my $members_down = 0;
+	foreach my $member_state_key ( keys %member_state ) {
+		if ($member_state{$member_state_key} eq "DOWN") {
+			$members_down++;
+		} else {
+			$members_up++;
+		}
+	}
+
+	# check quorum
+	my $member_quorum = sprintf("%1.2f", 100 / ( $members_up + $members_down ) * $members_up);
+
+	if ($member_quorum <= $member_quorum_critical) {
+		$servicegroup_state = CRITICAL;
+	} elsif ($member_quorum <= $member_quorum_warning) {
+		$servicegroup_state = WARNING;
+	}
+
+	$plugin->add_message(OK, "member quorum: " . $member_quorum . "% (UP/DOWN): " . $members_up . "/" . $members_down);
+
+	$plugin->add_perfdata(
+		label    => "'" . $plugin->opts->objectname . ".member_quorum'",
+		value    => $member_quorum."%",
+		min      => 0,
+		max      => 100,
+		warning  => $member_quorum_warning,
+		critical => $member_quorum_critical,
+	);
 
 	my ($code, $message) = $plugin->check_messages;
 	if (scalar @servicegroup_errors != 0 ) {
