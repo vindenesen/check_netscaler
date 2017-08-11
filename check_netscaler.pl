@@ -631,7 +631,7 @@ sub get_performancedata
 	$params{'options'}    = undef;
 
 	if (not defined ($plugin->opts->objectname)) {
-		$plugin->nagios_exit(UNKNOWN, 'performancedata: no object name(s) "-n" set');
+		$plugin->nagios_die('performancedata: no object name(s) "-n" set');
 	}
 
 	my $response = nitro_client($plugin, \%params);
@@ -641,16 +641,16 @@ sub get_performancedata
 		foreach $response (@{$response}) {
 			foreach my $objectname (split(",",$plugin->opts->objectname)) {
 				if (not index($objectname, ".") != -1) {
-					$plugin->nagios_exit(UNKNOWN, 'performancedata: return data is an array and contains multible objects. You need te seperate id and name with a ".".');
+					$plugin->nagios_die('performancedata: return data is an array and contains multible objects. You need te seperate id and name with a ".".');
 				}
 
 				my ($objectname_id, $objectname_name) = split /\./, $objectname;
 
 				if (not defined($response->{$objectname_id})) {
-					$plugin->nagios_exit(UNKNOWN, 'performancedata: object id "' . $objectname_id . '" not found in output.');
+					$plugin->nagios_die('performancedata: object id "' . $objectname_id . '" not found in output.');
 				}
 				if (not defined($response->{$objectname_name})) {
-					$plugin->nagios_exit(UNKNOWN, 'performancedata: object name "' . $objectname_name . '" not found in output.');
+					$plugin->nagios_die('performancedata: object name "' . $objectname_name . '" not found in output.');
 				}
 
 				$plugin->add_message(OK, $params{'objecttype'} . "." . $response->{$objectname_id} . "." . $objectname_name . ":" . $response->{$objectname_name} . ",");
@@ -668,7 +668,7 @@ sub get_performancedata
 	} elsif ( ref $response eq "HASH" ) {
 		foreach my $objectname (split(",",$plugin->opts->objectname)) {
 			if (not defined($response->{$objectname})) {
-				$plugin->nagios_exit(UNKNOWN, 'performancedata: object name "' . $objectname . '" not found in output.');
+				$plugin->nagios_die('performancedata: object name "' . $objectname . '" not found in output.');
 			}
 			$plugin->add_message(OK, $params{'objecttype'} . "." . $objectname .":", $response->{$objectname}. ",");
 
@@ -682,7 +682,7 @@ sub get_performancedata
 			);
 		}
 	} else {
-		$plugin->nagios_exit(UNKNOWN, 'performancedata: unable to parse data. Returned data is not a HASH or ARRAY!');
+		$plugin->nagios_die('performancedata: unable to parse data. Returned data is not a HASH or ARRAY!');
 	}
 
 	my ($code, $message) = $plugin->check_messages;
