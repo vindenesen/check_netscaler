@@ -145,6 +145,9 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
     # NetScaler::Performancedata on network interfaces
     ./check_netscaler.pl -H ${IPADDR} -s -C performancedata -o Interface -n id.totrxbytes
 
+    # NetScaler::Current user sessions
+    ./check_netscaler.pl -H ${IPADDR} -s -C performancedata -o aaa -n aaacuricasessions,aaacuricaonlyconn
+
     # find more object names to check out for object type "ns"
     /check_netscaler.pl -H ${IPADDR} -s -C debug -o ns
 
