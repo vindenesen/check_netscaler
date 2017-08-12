@@ -109,11 +109,11 @@ echo NetScaler::System::Disk1
 echo
 
 echo NetScaler::HA::Status
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C string_not -o hanode -n hacurstatus -w YES -c YES
+./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C matches_not -o hanode -n hacurstatus -w YES -c YES
 echo
 
 echo NetScaler::HA::State
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C string_not -o hanode -n hacurstate -w UP -c UP
+./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C matches_not -o hanode -n hacurstate -w UP -c UP
 echo
 
 

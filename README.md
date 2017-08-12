@@ -5,21 +5,21 @@ A Nagios Plugin written for the Citrix NetScaler Application Delivery Controller
 Currently the plugin has the following subcommands:
 
 
-| command | description |
----       | --- | 
-**state**              | check the current service state of vservers (e.g. lb, vpn, gslb), services and service groups
-**string, string_not** | check if a string exists in the api response or not (e.g. HA or cluster status)
-**above, below**       | check if a value is above/below a threshold (e.g. traffic limits, concurrent connections)
-**sslcert**            | check the lifetime for installed ssl certificates
-**nsconfig**           | check for configuration changes which are not saved to disk
-**license**            | check the expiry date of a local installed license file
-**server**             | check status of Load Balancing Servers
-**staserver**          | check if configured STA (secure ticket authority) servers are available
-**servicegroup**       | check the state of a servicegroup and its members
-**hwinfo**             | just print information about the Netscaler itself
-**interfaces**         | check state of all interfaces and add performance data for each interface
-**performancedata**    | gather performancedata from all sorts of API endpoints
-**debug**              | debug command, print all data for a endpoint
+| command                | description |
+---                      | --- | 
+**state**                | check the current service state of vservers (e.g. lb, vpn, gslb), services and service groups
+**matches, matches_not** | check if a string exists in the api response or not (e.g. HA or cluster status)
+**above, below**         | check if a value is above/below a threshold (e.g. traffic limits, concurrent connections)
+**sslcert**              | check the lifetime for installed ssl certificates
+**nsconfig**             | check for configuration changes which are not saved to disk
+**license**              | check the expiry date of a local installed license file
+**server**               | check status of Load Balancing Servers
+**staserver**            | check if configured STA (secure ticket authority) servers are available
+**servicegroup**         | check the state of a servicegroup and its members
+**hwinfo**               | just print information about the Netscaler itself
+**interfaces**           | check state of all interfaces and add performance data for each interface
+**performancedata**      | gather performancedata from all sorts of API endpoints
+**debug**                | debug command, print all data for a endpoint
 
 This plugin works with VPX, MPX, SDX and CPX NetScaler Appliances. The api responses may differ by build, appliance type and your installed license.
 
@@ -134,10 +134,10 @@ define member quorum (in percent) with warning and critical values
 
 ```
 # NetScaler::HA::Status
-./check_netscaler.pl -H ${IPADDR} -s -C string_not -o hanode -n hacurstatus -w YES -c YES
+./check_netscaler.pl -H ${IPADDR} -s -C matches_not -o hanode -n hacurstatus -w YES -c YES
 
 # NetScaler::HA::State
-./check_netscaler.pl -H ${IPADDR} -s -C string_not -o hanode -n hacurstate -w UP -c UP
+./check_netscaler.pl -H ${IPADDR} -s -C matches_not -o hanode -n hacurstate -w UP -c UP
 ```
 
 ### Check expiration of installed ssl certificates
