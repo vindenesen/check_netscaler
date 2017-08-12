@@ -127,7 +127,7 @@ my @args = (
 	{
 		spec => 'urlopts|x=s',
 		usage => '-x, --urlopts=STRING',
-		desc => 'DEBUG ONLY: add additional url options',
+		desc => 'add additional url options',
 		required => 0,
 	},
 );
@@ -325,7 +325,7 @@ sub check_state
 
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = $plugin->opts->objectname;
-	$params{'options'}    = undef;
+	$params{'options'}    = $plugin->opts->urlopts;
 
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->objecttype};
@@ -414,7 +414,7 @@ sub check_string
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = undef;
-	$params{'options'}    = undef;
+	$params{'options'}    = $plugin->opts->urlopts;
 
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->objecttype};
@@ -453,7 +453,7 @@ sub check_threshold
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = undef;
-	$params{'options'}    = undef;
+	$params{'options'}    = $plugin->opts->urlopts;
 
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->objecttype};
@@ -488,7 +488,7 @@ sub check_sslcert
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
 	$params{'objecttype'} = $plugin->opts->objecttype || 'sslcertkey';
 	$params{'objectname'} = $plugin->opts->objectname;
-	$params{'options'}    = undef;
+	$params{'options'}    = $plugin->opts->urlopts;
 
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$params{'objecttype'}};
@@ -517,7 +517,7 @@ sub check_staserver
 	my %params;
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
 	$params{'objectname'} = $plugin->opts->objectname || '';
-	$params{'options'}    = undef;
+	$params{'options'}    = $plugin->opts->urlopts;
 
 	if ($params{'objectname'} eq '') {
 		$params{'objecttype'} = $plugin->opts->objecttype || 'vpnglobal_staserver_binding';
@@ -555,7 +555,7 @@ sub check_server
 	my %params;
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
 	$params{'objectname'} = $plugin->opts->objectname || '';
-	$params{'options'}    = undef;
+	$params{'options'}    = $plugin->opts->urlopts;
 	$params{'objecttype'} = 'server';
 
 	my $response = nitro_client($plugin, \%params);
@@ -589,7 +589,7 @@ sub check_nsconfig
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
 	$params{'objecttype'} = $plugin->opts->objecttype || 'nsconfig';
 	$params{'objectname'} = undef;
-	$params{'options'}    = undef;
+	$params{'options'}    = $plugin->opts->urlopts;
 
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$params{'objecttype'}};
@@ -609,7 +609,7 @@ sub get_hardware_info
 	$params{'endpoint'}   = 'config';
 	$params{'objecttype'} = 'nshardware';
 	$params{'objectname'} = undef;
-	$params{'options'}    = undef;
+	$params{'options'}    = $plugin->opts->urlopts;
 
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$params{'objecttype'}};
@@ -638,7 +638,7 @@ sub get_performancedata
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = undef;
-	$params{'options'}    = undef;
+	$params{'options'}    = $plugin->opts->urlopts;
 
 	if (!defined $plugin->opts->objectname) {
 		$plugin->nagios_die('performancedata: command requires parameter for objectname');
@@ -708,7 +708,7 @@ sub check_interfaces
 	$params{'endpoint'}   = 'config';
 	$params{'objecttype'} = 'interface';
 	$params{'objectname'} = undef;
-	$params{'options'}    = undef;
+	$params{'options'}    = $plugin->opts->urlopts;
 
 	my $response = nitro_client($plugin, \%params);
 
@@ -774,7 +774,7 @@ sub check_servicegroup
 	$params{'endpoint'}   = 'config';
 	$params{'objecttype'} = 'servicegroup';
 	$params{'objectname'} = $plugin->opts->objectname;
-	$params{'options'}    = undef;
+	$params{'options'}    = $plugin->opts->urlopts;
 
 	if (not defined ($plugin->opts->objectname)) {
 		$plugin->nagios_die('servicegroup: no object name "-n" set');
@@ -873,7 +873,7 @@ sub check_license
 	my %params;
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
 	$params{'objecttype'} = 'systemfile';
-	$params{'objectname'} = undef;
+	$params{'options'}    = $plugin->opts->urlopts;
 
 	if (!defined $plugin->opts->warning || !$plugin->opts->critical) {
 		$plugin->nagios_die('command requires parameter for warning and critical');
