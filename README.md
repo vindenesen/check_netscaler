@@ -24,7 +24,7 @@ This plugin works with VPX, MPX, SDX and CPX NetScaler Appliances. The api respo
 
 The plugin supports performance data for the commands state and the above or below threshold checks. Also there is a performancedata command to gather information from your NetScaler.
 
-Example configurations for Nagios and Icinga 2 can be found in the exmaples directory of this repository.
+Example configurations for Nagios and Icinga 2 can be found in the examples directory of this repository.
 
 Feedback and feature requests are appreciated. Just create an issue on GitHub or send me a pull request.
 
