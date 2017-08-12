@@ -6,7 +6,7 @@
 #
 # https://github.com/slauger/check_netscaler
 #
-# Version: 1.2.0 (2017-XX-XX)
+# Version: 1.2.0 (2017-08-12)
 #
 # Copyright 2015-2017 Simon Lauger
 #
@@ -35,8 +35,8 @@ use Nagios::Plugin;
 my $plugin = Nagios::Plugin->new(
 	plugin		=> 'check_netscaler',
 	shortname	=> 'NetScaler',
-	version		=> '1.2.X',
-	url			=> 'https://github.com/slauger/check_netscaler',
+	version		=> '1.2.0',
+	url		=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX/CPX)',
 	usage		=> 'Usage: %s -H <hostname> [ -u <username> ] [ -p <password> ]
 -C <command> [ -o <objecttype> ] [ -n <objectname> ] [ -e <endpoint> ]
@@ -147,10 +147,10 @@ if ($plugin->opts->command eq 'state') {
 	check_threshold($plugin, $plugin->opts->command);
 } elsif ($plugin->opts->command eq 'string') {
 	# check if a response does contains a specific string
-	check_string($plugin, "matches");
+	check_string($plugin, 'matches');
 } elsif ($plugin->opts->command eq 'string_not') {
 	# check if a response does not contains a specific string
-	check_string($plugin, "matches not");
+	check_string($plugin, 'matches not');
 } elsif ($plugin->opts->command eq 'sslcert') {
 	# check for the lifetime of installed certificates
 	check_sslcert($plugin);
@@ -258,7 +258,7 @@ sub nitro_client {
 	}
 
 	if ($plugin->opts->verbose) {
-		print "debug: target url is " . $url . "\n";
+		print "debug: target url is $url\n";
 	}
 
 	my $request = HTTP::Request->new(GET => $url);
@@ -401,7 +401,7 @@ sub check_string
 		$plugin->nagios_die('command requires parameter for warning and critical');
 	}
 
-	if ($type_of_string_comparison ne "matches" && $type_of_string_comparison ne "matches not") {
+	if ($type_of_string_comparison ne 'matches' && $type_of_string_comparison ne 'matches not') {
 		$plugin->nagios_die('string can only be checked for "matches" and "matches not"');
 	}
 
@@ -414,9 +414,9 @@ sub check_string
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->objecttype};
 
-	if (($type_of_string_comparison eq "matches" && $response->{$plugin->opts->objectname} eq $plugin->opts->critical) || ($type_of_string_comparison eq "matches not" && $response->{$plugin->opts->objectname} ne $plugin->opts->critical)) {
+	if (($type_of_string_comparison eq 'matches' && $response->{$plugin->opts->objectname} eq $plugin->opts->critical) || ($type_of_string_comparison eq 'matches not' && $response->{$plugin->opts->objectname} ne $plugin->opts->critical)) {
 		$plugin->nagios_exit(CRITICAL, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' ' . $type_of_string_comparison . ' keyword (current: ' . $response->{$plugin->opts->objectname} . ', critical: ' . $plugin->opts->critical . ')');
-	} elsif (($type_of_string_comparison eq "matches" && $response->{$plugin->opts->objectname} eq $plugin->opts->warning) || ($type_of_string_comparison eq "matches not" && $response->{$plugin->opts->objectname} ne $plugin->opts->warning)) {
+	} elsif (($type_of_string_comparison eq 'matches' && $response->{$plugin->opts->objectname} eq $plugin->opts->warning) || ($type_of_string_comparison eq 'matches not' && $response->{$plugin->opts->objectname} ne $plugin->opts->warning)) {
 		$plugin->nagios_exit(WARNING, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' ' . $type_of_string_comparison . ' keyword (current: ' . $response->{$plugin->opts->objectname} . ', warning: ' . $plugin->opts->warning . ')');
 	} else {
 		$plugin->nagios_exit(OK, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' OK ('.$response->{$plugin->opts->objectname}.')');
@@ -440,7 +440,7 @@ sub check_threshold
 		$plugin->nagios_die('command requires parameter for warning and critical');
 	}
 
-	if ($direction ne "above" && $direction ne "below") {
+	if ($direction ne 'above' && $direction ne 'below') {
 		$plugin->nagios_die('threshold can only be checked for "above" and "below"');
 	}
 
@@ -463,9 +463,9 @@ sub check_threshold
 		critical => $plugin->opts->critical,
 	);
 
-	if (($direction eq "above" && $response->{$plugin->opts->objectname} >= $plugin->opts->critical) || ($direction eq "below" && $response->{$plugin->opts->objectname} <= $plugin->opts->critical)) {
+	if (($direction eq 'above' && $response->{$plugin->opts->objectname} >= $plugin->opts->critical) || ($direction eq 'below' && $response->{$plugin->opts->objectname} <= $plugin->opts->critical)) {
 		$plugin->nagios_exit(CRITICAL, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' is ' . $direction . ' threshold (current: ' . $response->{$plugin->opts->objectname} . ', critical: ' . $plugin->opts->critical . ')');
-	} elsif (($direction eq "above" && $response->{$plugin->opts->objectname} >= $plugin->opts->warning) || ($direction eq "below" && $response->{$plugin->opts->objectname} <= $plugin->opts->warning)) {
+	} elsif (($direction eq 'above' && $response->{$plugin->opts->objectname} >= $plugin->opts->warning) || ($direction eq 'below' && $response->{$plugin->opts->objectname} <= $plugin->opts->warning)) {
 		$plugin->nagios_exit(WARNING, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' is ' . $direction . ' threshold (current: ' . $response->{$plugin->opts->objectname} . ', warning: ' . $plugin->opts->warning . ')');
 	} else {
 		$plugin->nagios_exit(OK, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' OK ('.$response->{$plugin->opts->objectname}.')');
@@ -539,7 +539,7 @@ sub check_staserver
 
 	my ($code, $message) = $plugin->check_messages;
 
-	if ( $critical == 1) { $code = CRITICAL ; }
+	if ( $critical == 1) { $code = CRITICAL; }
 
 	$plugin->nagios_exit($code, 'server ' . $message);
 }
@@ -552,15 +552,15 @@ sub check_server
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
 	$params{'objectname'} = $plugin->opts->objectname || '';
 	$params{'options'}    = undef;
-	$params{'objecttype'} = "server";
+	$params{'objecttype'} = 'server';
 
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$params{'objecttype'}};
 
-	# return critical if all staservers are down at once
+	# return critical if all servers are disabled at once
 	my $critical = 1;
 
-	# check if any stas are in down state
+	# check if any server is in disabled state
 	foreach $response (@{$response}) {
 		if ($response->{'state'} ne 'ENABLED') {
 			$plugin->add_message(WARNING, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ' ;');
@@ -572,7 +572,7 @@ sub check_server
 
 	my ($code, $message) = $plugin->check_messages;
 
-	if ( $critical == 1) { $code = CRITICAL ; }
+	if ( $critical == 1) { $code = CRITICAL; }
 
 	$plugin->nagios_exit($code, 'server ' . $message);
 }
@@ -610,17 +610,17 @@ sub get_hardware_info
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$params{'objecttype'}};
 
-	$plugin->add_message(OK, "Platform: " . $response->{'hwdescription'} . ' ' . $response->{'sysid'} . ';');
-	$plugin->add_message(OK, "Manufactured on: " . $response->{'manufactureyear'} . '/' . $response->{'manufacturemonth'} . '/' . $response->{'manufactureday'} . ';');
-	$plugin->add_message(OK, "CPU: " . $response->{'cpufrequncy'} . 'MHz;');
-	$plugin->add_message(OK, "Serial no: " . $response->{'serialno'} . ';');
+	$plugin->add_message(OK, 'Platform: ' . $response->{'hwdescription'} . ' ' . $response->{'sysid'} . ';');
+	$plugin->add_message(OK, 'Manufactured on: ' . $response->{'manufactureyear'} . '/' . $response->{'manufacturemonth'} . '/' . $response->{'manufactureday'} . ';');
+	$plugin->add_message(OK, 'CPU: ' . $response->{'cpufrequncy'} . 'MHz;');
+	$plugin->add_message(OK, 'Serial no: ' . $response->{'serialno'} . ';');
 
 	$params{'objecttype'} = 'nsversion';
 
 	$response = nitro_client($plugin, \%params);
 	$response = $response->{$params{'objecttype'}};
 
-	$plugin->add_message(OK, "Build Version: " . $response->{'version'} . ';');
+	$plugin->add_message(OK, 'Build Version: ' . $response->{'version'} . ';');
 
 	my ($code, $message) = $plugin->check_messages;
 	$plugin->nagios_exit($code, 'INFO: ' . $message);
@@ -636,17 +636,17 @@ sub get_performancedata
 	$params{'objectname'} = undef;
 	$params{'options'}    = undef;
 
-	if (not defined ($plugin->opts->objectname)) {
-		$plugin->nagios_die('performancedata: no object name(s) "-n" set');
+	if (!defined $plugin->opts->objectname) {
+		$plugin->nagios_die('performancedata: command requires parameter for objectname');
 	}
 
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$params{'objecttype'}};
 
-	if ( ref $response eq "ARRAY" ) {
+	if ( ref $response eq 'ARRAY' ) {
 		foreach $response (@{$response}) {
-			foreach my $objectname (split(",",$plugin->opts->objectname)) {
-				if (not index($objectname, ".") != -1) {
+			foreach my $objectname (split(',', $plugin->opts->objectname)) {
+				if (not index($objectname, '.') != -1) {
 					$plugin->nagios_die('performancedata: return data is an array and contains multible objects. You need te seperate id and name with a ".".');
 				}
 
@@ -659,10 +659,10 @@ sub get_performancedata
 					$plugin->nagios_die('performancedata: object name "' . $objectname_name . '" not found in output.');
 				}
 
-				$plugin->add_message(OK, $params{'objecttype'} . "." . $response->{$objectname_id} . "." . $objectname_name . ":" . $response->{$objectname_name} . ",");
+				$plugin->add_message(OK, $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . ":" . $response->{$objectname_name} . ",");
 
 				$plugin->add_perfdata(
-					label    => "'" . $params{'objecttype'} . "." . $response->{$objectname_id} . "." . $objectname_name . "'",
+					label    => "'" . $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . "'",
 					value    => $response->{$objectname_name},
 					min      => undef,
 					max      => undef,
@@ -671,15 +671,15 @@ sub get_performancedata
 				);
 			}
 		}
-	} elsif ( ref $response eq "HASH" ) {
-		foreach my $objectname (split(",",$plugin->opts->objectname)) {
+	} elsif ( ref $response eq 'HASH' ) {
+		foreach my $objectname (split(',', $plugin->opts->objectname)) {
 			if (not defined($response->{$objectname})) {
 				$plugin->nagios_die('performancedata: object name "' . $objectname . '" not found in output.');
 			}
-			$plugin->add_message(OK, $params{'objecttype'} . "." . $objectname .":", $response->{$objectname}. ",");
+			$plugin->add_message(OK, $params{'objecttype'} . '.' . $objectname . ':', $response->{$objectname}. ',');
 
 			$plugin->add_perfdata(
-				label    => "'" . $params{'objecttype'} . "." . $objectname . "'",
+				label    => "'" . $params{'objecttype'} . '.' . $objectname . "'",
 				value    => $response->{$objectname},
 				min      => undef,
 				max      => undef,
@@ -712,45 +712,45 @@ sub check_interfaces
 
 		my $interface_state = OK;
 
-		my $interface_speed = "N/A";
+		my $interface_speed = 'N/A';
 		if ($interface->{'actspeed'}) { $interface_speed = $interface->{'actspeed'}; }
 
 		if ($interface->{'linkstate'} != 1 ) {
-			push(@interface_errors, "interface " . $interface->{'devicename'} . " has linkstate \"DOWN\"");
+			push(@interface_errors, 'interface ' . $interface->{'devicename'} . " has linkstate \"DOWN\"");
 			$interface_state = CRITICAL;
 		}
 		if ($interface->{'intfstate'} != 1 ) {
-			push(@interface_errors, "interface " . $interface->{'devicename'} . " has intstate \"DOWN\"");
+			push(@interface_errors, 'interface ' . $interface->{'devicename'} . " has intstate \"DOWN\"");
 			$interface_state = CRITICAL;
 		}
-		if ($interface->{'state'} ne "ENABLED" ) {
-			push(@interface_errors, "interface " . $interface->{'devicename'} . " has state \"".$interface->{'state'}."\"");
+		if ($interface->{'state'} ne 'ENABLED' ) {
+			push(@interface_errors, 'interface ' . $interface->{'devicename'} . " has state \"".$interface->{'state'}."\"");
 			$interface_state = CRITICAL;
 		}
 
-		$plugin->add_message($interface_state, "device: " . $interface->{'devicename'} . ' (speed: ' . $interface_speed . ', MTU: ' . $interface->{'actualmtu'} . ', VLAN: ' . $interface->{'vlan'} . ', type: ' . $interface->{'intftype'} . ') ' . $interface->{'state'} . ';');
+		$plugin->add_message($interface_state, 'device: ' . $interface->{'devicename'} . ' (speed: ' . $interface_speed . ', MTU: ' . $interface->{'actualmtu'} . ', VLAN: ' . $interface->{'vlan'} . ', type: ' . $interface->{'intftype'} . ') ' . $interface->{'state'} . ';');
 
 		$plugin->add_perfdata(
 			label    => "\'".$interface->{'devicename'} . ".rxbytes'",
-			value    => $interface->{'rxbytes'}."B"
+			value    => $interface->{'rxbytes'}.'B'
 		);
 		$plugin->add_perfdata(
 			label    => "\'".$interface->{'devicename'} . ".txbytes'",
-			value    => $interface->{'txbytes'}."B"
+			value    => $interface->{'txbytes'}.'B'
 		);
 		$plugin->add_perfdata(
 			label    => "\'".$interface->{'devicename'} . ".rxerrors'",
-			value    => $interface->{'rxerrors'}."c"
+			value    => $interface->{'rxerrors'}.'c'
 		);
 		$plugin->add_perfdata(
 			label    => "\'".$interface->{'devicename'} . ".txerrors'",
-			value    => $interface->{'txerrors'}."c"
+			value    => $interface->{'txerrors'}.'c'
 		);
 	}
 
 	my ($code, $message) = $plugin->check_messages;
 	if (scalar @interface_errors != 0 ) {
-		$message = join(", ",@interface_errors). " - ". $message
+		$message = join(', ', @interface_errors). ' - '. $message
 	}
 	$plugin->nagios_exit($code, 'Interfaces: ' . $message);
 }
@@ -761,8 +761,8 @@ sub check_servicegroup
 	my @servicegroup_errors;
 
 	# define quorum (in percent) of working servicegroup members
-	my $member_quorum_warning = $plugin->opts->warning || "90";
-	my $member_quorum_critical = $plugin->opts->critical || "50";
+	my $member_quorum_warning = $plugin->opts->warning || '90';
+	my $member_quorum_critical = $plugin->opts->critical || '50';
 
 	my %member_state;
 
@@ -777,14 +777,14 @@ sub check_servicegroup
 	}
 
 	my %healthy_servicegroup_states;
-	$healthy_servicegroup_states{"state"} = "ENABLED";
-	$healthy_servicegroup_states{"servicegroupeffectivestate"} = "UP";
-	$healthy_servicegroup_states{"monstate"} = "ENABLED";
-	$healthy_servicegroup_states{"healthmonitor"} = "YES";
+	$healthy_servicegroup_states{'state'} = 'ENABLED';
+	$healthy_servicegroup_states{'servicegroupeffectivestate'} = 'UP';
+	$healthy_servicegroup_states{'monstate'} = 'ENABLED';
+	$healthy_servicegroup_states{'healthmonitor'} = 'YES';
 
 	my %healthy_servicegroup_member_states;
-	$healthy_servicegroup_member_states{"state"} = "ENABLED";
-	$healthy_servicegroup_member_states{"svrstate"} = "UP";
+	$healthy_servicegroup_member_states{'state'} = 'ENABLED';
+	$healthy_servicegroup_member_states{'svrstate'} = 'UP';
 
 	my $response = nitro_client($plugin, \%params);
 	my $servicegroup_response = $response->{$params{'objecttype'}};
@@ -796,7 +796,7 @@ sub check_servicegroup
 		foreach my $servicegroup_check_key ( keys %healthy_servicegroup_states ) {
 
 			if ($servicegroup_response->{$servicegroup_check_key} ne $healthy_servicegroup_states{$servicegroup_check_key}) {
-				push(@servicegroup_errors, 'servicegroup ' . $servicegroup_response->{"servicegroupname"} . ' "'. $servicegroup_check_key . '" is: '. $healthy_servicegroup_states{$servicegroup_check_key});
+				push(@servicegroup_errors, 'servicegroup ' . $servicegroup_response->{'servicegroupname'} . ' "'. $servicegroup_check_key . '" is: '. $healthy_servicegroup_states{$servicegroup_check_key});
 			}
 		}
 		$plugin->add_message(OK, $servicegroup_response->{'servicegroupname'} . ' (' . $servicegroup_response->{'servicetype'} . ') - state: ' . $servicegroup_response->{'servicegroupeffectivestate'} . ' -');
@@ -814,12 +814,12 @@ sub check_servicegroup
 		foreach my $servicegroup_members_check_key ( keys %healthy_servicegroup_member_states ) {
 
 			if ($servicegroup_members_response->{$servicegroup_members_check_key} ne $healthy_servicegroup_member_states{$servicegroup_members_check_key}) {
-				push(@servicegroup_errors, 'servicegroup member ' . $servicegroup_members_response->{"servername"} . ' "'. $servicegroup_members_check_key . '" is '. $healthy_servicegroup_member_states{$servicegroup_members_check_key});
-				$member_state{$servicegroup_members_response->{"servername"}} = "DOWN";
+				push(@servicegroup_errors, 'servicegroup member ' . $servicegroup_members_response->{'servername'} . ' "'. $servicegroup_members_check_key . '" is '. $healthy_servicegroup_member_states{$servicegroup_members_check_key});
+				$member_state{$servicegroup_members_response->{'servername'}} = 'DOWN';
 			}
 		}
-		if (not defined $member_state{$servicegroup_members_response->{"servername"}}) {
-			$member_state{$servicegroup_members_response->{"servername"}} = "UP";
+		if (not defined $member_state{$servicegroup_members_response->{'servername'}}) {
+			$member_state{$servicegroup_members_response->{'servername'}} = "UP";
 		}
 		$plugin->add_message(OK, $servicegroup_members_response->{'servername'} . ' (' . $servicegroup_members_response->{'ip'}.':'. $servicegroup_members_response->{'port'} . ') is ' . $servicegroup_members_response->{'svrstate'} .',');
 	}
@@ -828,7 +828,7 @@ sub check_servicegroup
 	my $members_up = 0;
 	my $members_down = 0;
 	foreach my $member_state_key ( keys %member_state ) {
-		if ($member_state{$member_state_key} eq "DOWN") {
+		if ($member_state{$member_state_key} eq 'DOWN') {
 			$members_down++;
 		} else {
 			$members_up++;
@@ -836,7 +836,7 @@ sub check_servicegroup
 	}
 
 	# check quorum
-	my $member_quorum = sprintf("%1.2f", 100 / ( $members_up + $members_down ) * $members_up);
+	my $member_quorum = sprintf('%1.2f', 100 / ( $members_up + $members_down ) * $members_up);
 
 	if ($member_quorum <= $member_quorum_critical) {
 		$servicegroup_state = CRITICAL;
@@ -844,11 +844,11 @@ sub check_servicegroup
 		$servicegroup_state = WARNING;
 	}
 
-	$plugin->add_message(OK, "member quorum: " . $member_quorum . "% (UP/DOWN): " . $members_up . "/" . $members_down);
+	$plugin->add_message(OK, 'member quorum: ' . $member_quorum . '% (UP/DOWN): ' . $members_up . '/' . $members_down);
 
 	$plugin->add_perfdata(
 		label    => "'" . $plugin->opts->objectname . ".member_quorum'",
-		value    => $member_quorum."%",
+		value    => $member_quorum.'%',
 		min      => 0,
 		max      => 100,
 		warning  => $member_quorum_warning,
@@ -857,7 +857,7 @@ sub check_servicegroup
 
 	my ($code, $message) = $plugin->check_messages;
 	if (scalar @servicegroup_errors != 0 ) {
-		$message = join(", ",@servicegroup_errors). " - ". $message
+		$message = join(', ', @servicegroup_errors). ' - '. $message
 	}
 	$plugin->nagios_exit($servicegroup_state, 'servicegroup: ' . $message);
 }
