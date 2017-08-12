@@ -130,6 +130,13 @@ my @args = (
 		desc => 'add additional url options',
 		required => 0,
 	},
+	{
+		spec => 'api|a=s',
+		usage => '-a, --api=STRING',
+		desc => 'version of the NITRO API to use',
+		required => 0,
+		default => 'v1',
+	}
 );
 
 foreach my $arg (@args) {
@@ -252,7 +259,7 @@ sub nitro_client {
 		$port = '';
 	}
 
-	my $url = $protocol . $plugin->opts->hostname . $port . '/nitro/v1/' . $params->{'endpoint'} . '/' . $params->{'objecttype'};
+	my $url = $protocol . $plugin->opts->hostname . $port . '/nitro/' . $plugin->opts->api . '/' . $params->{'endpoint'} . '/' . $params->{'objecttype'};
 
 	if ($params->{'objectname'} && $params->{'objectname'} ne '') {
 		$url  = $url . '/' . uri_escape(uri_escape($params->{'objectname'}));
