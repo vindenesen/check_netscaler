@@ -1,6 +1,8 @@
 ## 1.3.0 (2017-XX-XX)
-- added command license to check the status of a local license file
+- added command license to check the status of a local license file (#17)
 - added perl-Time-Piece as new dependency (Time::Piece for license check)
+- added switch for selecting a different version of the NITRO API (fixes #16)
+- allow the usage of urlopts everywhere (fixes #13)
 
 ## 1.2.0 (2017-08-12)
 - merged pull request from @bb-Ricardo
