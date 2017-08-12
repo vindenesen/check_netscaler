@@ -6,7 +6,7 @@
 #
 # https://github.com/slauger/check_netscaler
 #
-# Version: 1.2.0 (2017-08-12)
+# Version: 1.3.0 (2017-XX-XX)
 #
 # Copyright 2015-2017 Simon Lauger
 #
@@ -29,13 +29,15 @@ use warnings;
 use LWP;
 use JSON;
 use URI::Escape;
+use MIME::Base64;
 use Data::Dumper;
 use Nagios::Plugin;
+use Time::Piece;
 
 my $plugin = Nagios::Plugin->new(
 	plugin		=> 'check_netscaler',
 	shortname	=> 'NetScaler',
-	version		=> '1.2.0',
+	version		=> '1.3.0',
 	url		=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX/CPX)',
 	usage		=> 'Usage: %s -H <hostname> [ -u <username> ] [ -p <password> ]
@@ -175,6 +177,9 @@ if ($plugin->opts->command eq 'state') {
 } elsif ($plugin->opts->command eq 'servicegroup') {
 	# check the state of a servicegroup and its members
 	check_servicegroup($plugin);
+} elsif ($plugin->opts->command eq 'license') {
+	# check a installed license file
+	check_license($plugin);
 } elsif ($plugin->opts->command eq 'debug') {
 	# dump the full response of the nitro api
 	check_debug($plugin);
@@ -453,7 +458,6 @@ sub check_threshold
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->objecttype};
 
-
 	$plugin->add_perfdata(
 		label    => $plugin->opts->objecttype . '::' . $plugin->opts->objectname,
 		value    => $response->{$plugin->opts->objectname},
@@ -563,9 +567,9 @@ sub check_server
 	# check if any server is in disabled state
 	foreach $response (@{$response}) {
 		if ($response->{'state'} ne 'ENABLED') {
-			$plugin->add_message(WARNING, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ';');
+			$plugin->add_message(WARNING, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ' ;');
 		} else {
-			$plugin->add_message(OK, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ';');
+			$plugin->add_message(OK, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ' ;');
 			$critical = 0;
 		}
 	}
@@ -860,6 +864,51 @@ sub check_servicegroup
 		$message = join(', ', @servicegroup_errors). ' - '. $message
 	}
 	$plugin->nagios_exit($servicegroup_state, 'servicegroup: ' . $message);
+}
+
+sub check_license
+{
+	my $plugin = shift;
+
+	my %params;
+	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
+	$params{'objecttype'} = 'systemfile';
+	$params{'objectname'} = undef;
+
+	if (!defined $plugin->opts->warning || !$plugin->opts->critical) {
+		$plugin->nagios_die('command requires parameter for warning and critical');
+	}
+
+	if (!defined $plugin->opts->objectname) {
+		$plugin->nagios_die('license filename must be given as objectname via "-n"')
+	}
+
+	$params{'options'} = 'args=filelocation:'.uri_escape('/nsconfig/license').',filename:'.uri_escape($plugin->opts->objectname);
+
+	my $response = nitro_client($plugin, \%params);
+
+	my @stripped;
+	my $timepiece;
+
+	foreach (split(/\n/, decode_base64($response->{'systemfile'}[0]->{'filecontent'}))) {
+		if ($_ =~ /^INCREMENT .*/) {
+			@stripped = split(' ', $_);
+
+			# date format in license file, e.g. 18-jan-2018
+			$timepiece = Time::Piece->strptime(($stripped[4], '%d-%b-%Y'));
+
+			if ($timepiece->epoch - time < (60*60*24*$plugin->opts->critical)) {
+				$plugin->add_message(CRITICAL, $stripped[1] . ' expires on ' . $stripped[4] . ';');
+			} elsif ($timepiece->epoch - time < (60*60*24*$plugin->opts->warning)) {
+				$plugin->add_message(WARNING, $stripped[1] . ' expires on ' . $stripped[4] . ';');
+			} else {
+				$plugin->add_message(OK, $stripped[1] . ' expires on ' . $stripped[4] . ';');
+			}
+		}
+	}
+
+	my ($code, $message) = $plugin->check_messages;
+	$plugin->nagios_exit($code, 'license: ' . $message);
 }
 
 sub check_debug

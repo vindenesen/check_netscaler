@@ -1,3 +1,7 @@
+## 1.3.0 (2017-XX-XX)
+- added command license to check the status of a local license file
+- added perl-Time-Piece as new dependency (Time::Piece for license check)
+
 ## 1.2.0 (2017-08-12)
 - merged pull request from @bb-Ricardo
   - added command server to check status of Load Balancing Servers

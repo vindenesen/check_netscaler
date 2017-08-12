@@ -12,6 +12,7 @@ Currently the plugin has the following subcommands:
 **above, below**       | check if a value is above/below a threshold (e.g. traffic limits, concurrent connections)
 **sslcert**            | check the lifetime for installed ssl certificates
 **nsconfig**           | check for configuration changes which are not saved to disk
+**license**            | check the expiry date of a local installed license file
 **server**             | check status of Load Balancing Servers
 **staserver**          | check if configured STA (secure ticket authority) servers are available
 **servicegroup**       | check the state of a servicegroup and its members
@@ -28,12 +29,14 @@ Example configurations for Nagios and Icinga 2 can be found in the examples dire
 
 Feedback and feature requests are appreciated. Just create an issue on GitHub or send me a pull request.
 
+If you looking for a plugin to test your NetScaler Gateway vServer and Storefront see also [check_netscaler_gateway](https://github.com/slauger/check_netscaler_gateway).
+
 ## Installation
 
 On a Enterprise Linux machine (CentOS, RHEL) execute the following commands to install all Perl dependencies (Nagios::Plugin, LWP, JSON):
 
 ```
-yum install perl-libwww-perl perl-JSON perl-Nagios-Plugin
+yum install perl-libwww-perl perl-JSON perl-Nagios-Plugin perl-Time-Piece
 ```
 
 If you want to connect to your NetScaler with SSL/HTTPS you should also install the LWP HTTPS package.
@@ -152,6 +155,16 @@ define member quorum (in percent) with warning and critical values
 ```
 # NetScaler::Config
 ./check_netscaler.pl -H ${IPADDR} -s -C nsconfig
+```
+
+### Check the expiry date of a local license file
+
+The license file must be placed in `/nsconfig/license` and the filename must be given as objectname.
+Also the NITRO user needs permissions to access the filesystem directly (NITRO command systemfile).
+
+```
+# NetScaler::License
+./check_netscaler.pl -H ${IPADDR} -s -C license -n FID_4c9a2c7e_14292ea2df2_2a97.lic -w 30 -c 10
 ```
 
 ### Check if STA servers are working
