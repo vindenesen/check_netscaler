@@ -89,7 +89,7 @@ yum install perl-LWP-Protocol-https
 ./check_netscaler.pl -H ${IPADDR} -s -C state -o servicegroup -n sg_webservers
 ```
 
-### Check status of a service group and quorum
+### Check status and quorum of a service group
 
 define member quorum (in percent) with warning and critical values
 
