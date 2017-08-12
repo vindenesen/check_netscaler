@@ -111,28 +111,20 @@ define member quorum (in percent) with warning and critical values
 ./check_netscaler.pl -H ${IPADDR} -s -C server -n web01.example.com
 ```
 
-### Check system health
+### Check for thresholds or matching strings
+
+Multiple fields need to be seperated by a colon.
 
 ```
 # NetScaler::Memory
 ./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n memusagepcnt -w 75 -c 80
 
 # NetScaler::CPU
-./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n cpuusagepcnt -w 75 -c 80
-
-# NetScaler::CPUMGMT
-./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n mgmtcpuusagepcnt -w 75 -c 80
-
-# NetScaler::Disk0
-./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n disk0perusage -w 75 -c 80
+./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n cpuusagepcnt,mgmtcpuusagepcnt -w 75 -c 80
 
 # NetScaler::Disk1
-./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n disk1perusage -w 75 -c 80
-```
+./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n disk0perusage,disk1perusage -w 75 -c 80
 
-### Check high availability status
-
-```
 # NetScaler::HA::Status
 ./check_netscaler.pl -H ${IPADDR} -s -C matches_not -o hanode -n hacurstatus -w YES -c YES
 
