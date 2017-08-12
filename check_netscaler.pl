@@ -563,9 +563,9 @@ sub check_server
 	# check if any server is in disabled state
 	foreach $response (@{$response}) {
 		if ($response->{'state'} ne 'ENABLED') {
-			$plugin->add_message(WARNING, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ' ;');
+			$plugin->add_message(WARNING, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ';');
 		} else {
-			$plugin->add_message(OK, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ' ;');
+			$plugin->add_message(OK, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ';');
 			$critical = 0;
 		}
 	}
