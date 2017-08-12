@@ -235,12 +235,12 @@ password=password
 ```
 
 ## Authors
-- @slauger
+- [slauger](https://github.com/slauger)
 
 ## Contributors
-- @macampo
-- @Velociraptor85
-- @bb-ricardo
+- [macampo](https://github.com/macampo)
+- [Velociraptor85](https://github.com/Velociraptor85)
+- [bb-ricardo](https://github.com/bb-ricardo)
 
 ## NITRO API Documentation
 
