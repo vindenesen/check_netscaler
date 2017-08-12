@@ -154,10 +154,12 @@ if ($plugin->opts->command eq 'state') {
 } elsif ($plugin->opts->command eq 'below') {
 	# check if a response is below  a threshold
 	check_threshold($plugin, $plugin->opts->command);
-} elsif ($plugin->opts->command eq 'string') {
+# be backwards compatible; also accept command 'string'
+} elsif ($plugin->opts->command eq 'matches' || $plugin->opts->command eq 'string') {
 	# check if a response does contains a specific string
 	check_string($plugin, 'matches');
-} elsif ($plugin->opts->command eq 'string_not') {
+# be backwards compatible; also accept command 'string_not'
+} elsif ($plugin->opts->command eq 'matches_not' || $plugin->opts->command eq 'string_not') {
 	# check if a response does not contains a specific string
 	check_string($plugin, 'matches not');
 } elsif ($plugin->opts->command eq 'sslcert') {
@@ -426,13 +428,19 @@ sub check_string
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->objecttype};
 
-	if (($type_of_string_comparison eq 'matches' && $response->{$plugin->opts->objectname} eq $plugin->opts->critical) || ($type_of_string_comparison eq 'matches not' && $response->{$plugin->opts->objectname} ne $plugin->opts->critical)) {
-		$plugin->nagios_exit(CRITICAL, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' ' . $type_of_string_comparison . ' keyword (current: ' . $response->{$plugin->opts->objectname} . ', critical: ' . $plugin->opts->critical . ')');
-	} elsif (($type_of_string_comparison eq 'matches' && $response->{$plugin->opts->objectname} eq $plugin->opts->warning) || ($type_of_string_comparison eq 'matches not' && $response->{$plugin->opts->objectname} ne $plugin->opts->warning)) {
-		$plugin->nagios_exit(WARNING, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' ' . $type_of_string_comparison . ' keyword (current: ' . $response->{$plugin->opts->objectname} . ', warning: ' . $plugin->opts->warning . ')');
-	} else {
-		$plugin->nagios_exit(OK, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' OK ('.$response->{$plugin->opts->objectname}.')');
+	foreach ( split(',', $plugin->opts->objectname) ) {
+		if (($type_of_string_comparison eq 'matches' && $response->{$_} eq $plugin->opts->critical) || ($type_of_string_comparison eq 'matches not' && $response->{$_} ne $plugin->opts->critical)) {
+			$plugin->add_message(CRITICAL, $plugin->opts->objecttype . '::' . $_ . ' ' . $type_of_string_comparison . ' keyword (current: ' . $response->{$_} . ', critical: ' . $plugin->opts->critical . ');');
+		} elsif (($type_of_string_comparison eq 'matches' && $response->{$_} eq $plugin->opts->warning) || ($type_of_string_comparison eq 'matches not' && $response->{$_} ne $plugin->opts->warning)) {
+			$plugin->add_message(WARNING, $plugin->opts->objecttype . '::' . $_ . ' ' . $type_of_string_comparison . ' keyword (current: ' . $response->{$_} . ', warning: ' . $plugin->opts->warning . ');');
+		} else {
+			$plugin->add_message(OK, $plugin->opts->objecttype . '::' . $_ . ' OK ('.$response->{$_}.');');
+		}
 	}
+
+	my ($code, $message) = $plugin->check_messages;
+
+	$plugin->nagios_exit($code, $message);
 }
 
 sub check_threshold
@@ -465,22 +473,28 @@ sub check_threshold
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->objecttype};
 
-	$plugin->add_perfdata(
-		label    => $plugin->opts->objecttype . '::' . $plugin->opts->objectname,
-		value    => $response->{$plugin->opts->objectname},
-		min      => undef,
-		max      => undef,
-		warning  => $plugin->opts->warning,
-		critical => $plugin->opts->critical,
-	);
+	foreach ( split(',', $plugin->opts->objectname) ) {
+		$plugin->add_perfdata(
+			label    => $plugin->opts->objecttype . '::' . $_,
+			value    => $response->{$_},
+			min      => undef,
+			max      => undef,
+			warning  => $plugin->opts->warning,
+			critical => $plugin->opts->critical,
+		);
 
-	if (($direction eq 'above' && $response->{$plugin->opts->objectname} >= $plugin->opts->critical) || ($direction eq 'below' && $response->{$plugin->opts->objectname} <= $plugin->opts->critical)) {
-		$plugin->nagios_exit(CRITICAL, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' is ' . $direction . ' threshold (current: ' . $response->{$plugin->opts->objectname} . ', critical: ' . $plugin->opts->critical . ')');
-	} elsif (($direction eq 'above' && $response->{$plugin->opts->objectname} >= $plugin->opts->warning) || ($direction eq 'below' && $response->{$plugin->opts->objectname} <= $plugin->opts->warning)) {
-		$plugin->nagios_exit(WARNING, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' is ' . $direction . ' threshold (current: ' . $response->{$plugin->opts->objectname} . ', warning: ' . $plugin->opts->warning . ')');
-	} else {
-		$plugin->nagios_exit(OK, $plugin->opts->objecttype . '::' . $plugin->opts->objectname . ' OK ('.$response->{$plugin->opts->objectname}.')');
+		if (($direction eq 'above' && $response->{$_} >= $plugin->opts->critical) || ($direction eq 'below' && $response->{$_} <= $plugin->opts->critical)) {
+			$plugin->add_message(CRITICAL, $plugin->opts->objecttype . '::' . $_ . ' is ' . $direction . ' threshold (current: ' . $response->{$_} . ', critical: ' . $plugin->opts->critical . ');');
+		} elsif (($direction eq 'above' && $response->{$_} >= $plugin->opts->warning) || ($direction eq 'below' && $response->{$_} <= $plugin->opts->warning)) {
+			$plugin->add_message(WARNING, $plugin->opts->objecttype . '::' . $_ . ' is ' . $direction . ' threshold (current: ' . $response->{$_} . ', warning: ' . $plugin->opts->warning . ');');
+		} else {
+			$plugin->add_message(OK, $_ . '::' . $_ . '   ('.$response->{$_}.')');
+		}
 	}
+
+	my ($code, $message) = $plugin->check_messages;
+
+	$plugin->nagios_exit($code, $message);
 }
 
 sub check_sslcert
