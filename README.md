@@ -122,7 +122,7 @@ Multiple fields need to be seperated by a colon.
 # NetScaler::CPU
 ./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n cpuusagepcnt,mgmtcpuusagepcnt -w 75 -c 80
 
-# NetScaler::Disk1
+# NetScaler::Disk
 ./check_netscaler.pl -H ${IPADDR} -s -C above -o system -n disk0perusage,disk1perusage -w 75 -c 80
 
 # NetScaler::HA::Status
