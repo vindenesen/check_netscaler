@@ -10,6 +10,11 @@ Currently the plugin has the following subcommands:
 - **sslcert:** check the lifetime for installed ssl certificates
 - **nsconfig:** check for configuration changes which are not saved to disk
 - **staserver:** check if configured STA servers are available
+- **server:** check status of Load Balancing Servers
+- **servicegroup:** check the state of a servicegroup and its members
+- **hwinfo:** just print information about the Netscaler itself
+- **interfaces:** check state of all interfaces and add performance data for each interface
+- **performancedata:** gather performancedata from all sorts of API endpoints
 - **debug:** debug command, print all data for a endpoint
 
 This plugin works with VPX, MPX, SDX and CPX NetScaler Appliances. The api responses may differ by build, appliance type and your installed license.
@@ -108,6 +113,51 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
     # NetScaler::STA::vs_vpn_gateway
     ./check_netscaler.pl -H ${IPADDR} -s -C staserver -n vs_vpn_gateway
 
+## Check if Load Balancer server are working
+
+    # NetScaler::Server
+    ./check_netscaler.pl -H ${IPADDR} -s -C server
+
+## Check status of a service group
+##### define member quorum (in percent) with warning and critical values
+    # NetScaler::Servicegroup::vs_vpn_gateway
+    ./check_netscaler.pl -H ${IPADDR} -s -C servicegroup -n vs_vpn_gateway -w 75 -c 50
+
+## Get information about the netscaler
+
+    # NetScaler::HWInfo
+    ./check_netscaler.pl -H ${IPADDR} -s -C hwinfo
+
+## Check status of all network interfaces
+
+    # NetScaler::Interfaces
+    ./check_netscaler.pl -H ${IPADDR} -s -C interfaces
+
+## Request performance data
+##### all fields must be defined via "-n" option and be seperated with a comma
+
+    # NetScaler::Performancedata on Cache hit/misses
+    ./check_netscaler.pl -H ${IPADDR} -s -C performancedata -o ns -n cachetothits,cachetotmisses
+
+    # NetScaler::Performancedata on tcp connections
+    ./check_netscaler.pl -H ${IPADDR} -s -C performancedata -o ns -n tcpcurclientconn,tcpcurclientconnestablished,tcpcurserverconn,tcpcurserverconnestablished
+
+    # NetScaler::Performancedata on network interfaces
+    ./check_netscaler.pl -H ${IPADDR} -s -C performancedata -o Interface -n id.totrxbytes
+
+    # NetScaler::Current user sessions
+    ./check_netscaler.pl -H ${IPADDR} -s -C performancedata -o aaa -n aaacuricasessions,aaacuricaonlyconn
+
+    # find more object names to check out for object type "ns"
+    /check_netscaler.pl -H ${IPADDR} -s -C debug -o ns
+
+    # more interesting performance data object types
+    * ns
+    * cache
+    * protocolhttp
+    * protocolip
+    * protocoltcp
+
 ## Debug command
     # Print all LB vServers (stat endpoint)
     ./check_netscaler.pl -H ${IPADDR} -s -C debug -o lbvserver
@@ -132,6 +182,14 @@ define command {
 username=nagios
 password=password
 ```
+
+# Authors
+- @slauger
+
+# Contributors
+- @macampo
+- @Velociraptor85
+- @bb-ricardo
 
 # NITRO API Documentation
 
