@@ -212,6 +212,12 @@ All fields must be defined via "-n" option and be seperated with a comma.
 /check_netscaler.pl -H ${IPADDR} -s -C debug -o ns
 ```
 
+[Global counters](https://docs.citrix.com/en-us/netscaler/12/nitro-api/nitro-rest/nitro-rest-usage-scenarios/view-individual-counter-info.html) can be accessed as follows (NetScaler 12.0 and newer).
+
+```
+./check_netscaler.pl -H ${IPADDR} -s -C performancedata -n http_tot_Requests,http_tot_Responses -x 'args=counters:http_tot_Requests;http_tot_Responses'
+```
+
 For more interesting performance data object types see the following API methods.
 
 - ns
