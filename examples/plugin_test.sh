@@ -40,47 +40,80 @@ else
 	PORT="-P ${5}"
 fi
 
-# NetScaler::SSLCerts
+echo NetScaler::SSLCerts
 ./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C sslcert -w 30 -c 10
+echo
 
-# NetScaler::NSConfig
+echo NetScaler::NSConfig
 ./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C nsconfig
+echo
 
-# NetScaler::VPNvServer::State
+echo NetScaler::HWInfo
+./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C hwinfo
+echo
+
+echo NetScaler::Interfaces
+./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C interfaces
+echo
+
+echo NetScaler::Perfdata::AAA
+./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C performancedata -o aaa -n aaacuricasessions,aaacuricaonlyconn
+echo
+
+echo NetScaler::VPNvServer::State
 ./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C state -o vpnvserver
+echo
 
-# NetScaler::LBvServer::State
+echo NetScaler::LBvServer::State
 ./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C state -o lbvserver
+echo
 
-# NetScaler::GSLBvServer::State
+echo NetScaler::GSLBvServer::State
 ./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C state -o gslbvserver
+echo
 
-# NetScaler:::AAAvServer::State
+echo NetScaler:::AAAvServer::State
 ./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C state -o authenticationvserver
+echo
 
-# NetScaler:::CSvServer::State
+echo NetScaler:::CSvServer::State
 ./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C state -o csvserver
+echo
 
-# NetScaler::SSLvServer::State
+#echo NetScaler::SSLvServer::State
 #./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C state -o sslvserver
+#echo
 
-# NetScaler::System::Memory
+echo NetScaler::Server
+./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C server
+echo
+
+echo NetScaler::System::Memory
 ./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C above -o system -n memusagepcnt -w 75 -c 80
+echo
 
-# NetScaler::System::CPU
+echo NetScaler::System::CPU
 ./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C above -o system -n cpuusagepcnt -w 75 -c 80
+echo
 
-# NetScaler::System::CPU::MGMT
+echo NetScaler::System::CPU::MGMT
 ./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C above -o system -n mgmtcpuusagepcnt -w 75 -c 80
+echo
 
-# NetScaler::System::Disk0
+echo NetScaler::System::Disk0
 ./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C above -o system -n disk0perusage -w 75 -c 80
+echo
 
-# NetScaler::System::Disk1
+echo NetScaler::System::Disk1
 ./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C above -o system -n disk1perusage -w 75 -c 80
+echo
 
-# NetScaler::HA::Status
+echo NetScaler::HA::Status
 ./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C string_not -o hanode -n hacurstatus -w YES -c YES
+echo
 
-# NetScaler::HA::State
+echo NetScaler::HA::State
 ./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C string_not -o hanode -n hacurstate -w UP -c UP
+echo
+
+
