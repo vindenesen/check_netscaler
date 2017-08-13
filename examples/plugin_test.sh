@@ -3,7 +3,7 @@
 if [ ! -f "${1}" ]; then
   echo "ERROR: config file not found or not readable"
   echo ""
-  echo "Syntax: $0 <config.ini>"
+  echo "Syntax: $0 <config.ini> [<section>]"
   echo ""
   echo "Configuration example:"
   echo ""
@@ -69,24 +69,20 @@ echo NetScaler::Server
 ./check_netscaler.pl --extra-opts=${section}@${1} -C server
 echo
 
+echo NetScaler::STA
+./check_netscaler.pl --extra-opts=${section}@${1} -C staserver
+echo
+
 echo NetScaler::System::Memory
 ./check_netscaler.pl --extra-opts=${section}@${1} -C above -o system -n memusagepcnt -w 75 -c 80
 echo
 
 echo NetScaler::System::CPU
-./check_netscaler.pl --extra-opts=${section}@${1} -C above -o system -n cpuusagepcnt -w 75 -c 80
+./check_netscaler.pl --extra-opts=${section}@${1} -C above -o system -n cpuusagepcnt,mgmtcpuusagepcnt -w 75 -c 80
 echo
 
-echo NetScaler::System::CPU::MGMT
-./check_netscaler.pl --extra-opts=${section}@${1} -C above -o system -n mgmtcpuusagepcnt -w 75 -c 80
-echo
-
-echo NetScaler::System::Disk0
-./check_netscaler.pl --extra-opts=${section}@${1} -C above -o system -n disk0perusage -w 75 -c 80
-echo
-
-echo NetScaler::System::Disk1
-./check_netscaler.pl --extra-opts=${section}@${1} -C above -o system -n disk1perusage -w 75 -c 80
+echo NetScaler::System::Disk
+./check_netscaler.pl --extra-opts=${section}@${1} -C above -o system -n disk0perusage,disk1perusage -w 75 -c 80
 echo
 
 echo NetScaler::HA::Status
@@ -97,4 +93,6 @@ echo NetScaler::HA::State
 ./check_netscaler.pl --extra-opts=${section}@${1} -C matches_not -o hanode -n hacurstate -w UP -c UP
 echo
 
-
+echo NetScaler::Perfdata::HTTP
+./check_netscaler.pl --extra-opts=${section}@${1} -C perfdata -o nsglobalcntr -n http_tot_Requests,http_tot_Responses -x 'args=counters:http_tot_Requests;http_tot_Responses'
+echo

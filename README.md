@@ -205,9 +205,11 @@ Multiple fields need to be seperated by a colon.
 The license file must be placed in `/nsconfig/license` and the filename must be given as objectname.
 Also the NITRO user needs permissions to access the filesystem directly (NITRO command systemfile).
 
+Multiple fasta files can be passed, separated with a colon.
+
 ```
 # NetScaler::License
-./check_netscaler.pl -H ${IPADDR} -s -C license -n FID_4c9a2c7e_14292ea2df2_2a97.lic -w 30 -c 10
+./check_netscaler.pl -H ${IPADDR} -s -C license -n FID_4c9a2c7e_14292ea2df2_2a97.lic,FID_2b9a2c7e_14212ef2d27_4b87.lic -w 30 -c 10
 ```
 
 ### Check if STA servers are working
@@ -258,7 +260,7 @@ All fields must be defined via "-n" option and be seperated with a comma.
 [Global counters](https://docs.citrix.com/en-us/netscaler/12/nitro-api/nitro-rest/nitro-rest-usage-scenarios/view-individual-counter-info.html) can be accessed as follows (NetScaler 12.0 and newer).
 
 ```
-./check_netscaler.pl -H ${IPADDR} -s -C perfdata -n http_tot_Requests,http_tot_Responses -x 'args=counters:http_tot_Requests;http_tot_Responses'
+./check_netscaler.pl -H ${IPADDR} -s -C perfdata -o nsglobalcntr -n http_tot_Requests,http_tot_Responses -x 'args=counters:http_tot_Requests;http_tot_Responses'
 ```
 
 For more interesting performance data object types see the following API methods.

@@ -307,7 +307,7 @@ sub check_state
 	my $plugin = shift;
 
 	if (!defined $plugin->opts->objecttype) {
-		$plugin->nagios_die('command requires objecttype parameter');
+		$plugin->nagios_die($plugin->opts->command . ': command requires objecttype parameter');
 	}
 
 	my %counter;
@@ -397,9 +397,9 @@ sub check_state
 	);
 
 	if ($code == OK) {
-		$plugin->nagios_exit($code, $plugin->opts->objecttype . ' OK' . $stats);
+		$plugin->nagios_exit($code, $plugin->opts->command . ' ' . $plugin->opts->objecttype . ': OK' . $stats);
 	} else {
-		$plugin->nagios_exit($code, $plugin->opts->objecttype . ' ' . $message . $stats);
+		$plugin->nagios_exit($code, $plugin->opts->command . ' ' . $plugin->opts->objecttype . ': ' . $message . $stats);
 	}
 }
 
@@ -409,19 +409,19 @@ sub check_string
 	my $type_of_string_comparison = shift;
 
 	if (!defined $plugin->opts->objecttype) {
-		$plugin->nagios_die('command requires parameter for objecttype');
+		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for objecttype');
 	}
 
 	if (!defined $plugin->opts->objectname) {
-		$plugin->nagios_die('command requires parameter for objectname');
+		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for objectname');
 	}
 
 	if (!defined $plugin->opts->warning || !defined $plugin->opts->critical) {
-		$plugin->nagios_die('command requires parameter for warning and critical');
+		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for warning and critical');
 	}
 
 	if ($type_of_string_comparison ne 'matches' && $type_of_string_comparison ne 'matches not') {
-		$plugin->nagios_die('string can only be checked for "matches" and "matches not"');
+		$plugin->nagios_die($plugin->opts->command . ': string can only be checked for "matches" and "matches not"');
 	}
 
 	my %params;
@@ -445,7 +445,7 @@ sub check_string
 
 	my ($code, $message) = $plugin->check_messages;
 
-	$plugin->nagios_exit($code, $message);
+	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
 }
 
 sub check_threshold
@@ -454,19 +454,19 @@ sub check_threshold
 	my $direction = shift;
 
 	if (!defined $plugin->opts->objecttype) {
-		$plugin->nagios_die('command requires parameter for objecttype');
+		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for objecttype');
 	}
 
 	if (!defined $plugin->opts->objectname) {
-		$plugin->nagios_die('command requires parameter for objectname');
+		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for objectname');
 	}
 
 	if (!defined $plugin->opts->warning || !defined $plugin->opts->critical) {
-		$plugin->nagios_die('command requires parameter for warning and critical');
+		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for warning and critical');
 	}
 
 	if ($direction ne 'above' && $direction ne 'below') {
-		$plugin->nagios_die('threshold can only be checked for "above" and "below"');
+		$plugin->nagios_die($plugin->opts->command . ': threshold can only be checked for "above" and "below"');
 	}
 
 	my %params;
@@ -498,8 +498,7 @@ sub check_threshold
 	}
 
 	my ($code, $message) = $plugin->check_messages;
-
-	$plugin->nagios_exit($code, $message);
+	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
 }
 
 sub check_sslcert
@@ -507,7 +506,7 @@ sub check_sslcert
 	my $plugin = shift;
 
 	if (!defined $plugin->opts->warning || !defined $plugin->opts->critical) {
-		$plugin->nagios_die('command requires parameter for warning and critical');
+		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for warning and critical');
 	}
 
 	my %params;
@@ -530,9 +529,9 @@ sub check_sslcert
 	my ($code, $message) = $plugin->check_messages;
 
 	if ($code == OK) {
-		$plugin->nagios_exit($code, 'sslcertkey OK');
+		$plugin->nagios_exit($code, $plugin->opts->command . ': certificate lifetime OK');
 	} else {
-		$plugin->nagios_exit($code, 'sslcertkey ' . $message);
+		$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
 	}
 }
 
@@ -554,6 +553,10 @@ sub check_staserver
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$params{'objecttype'}};
 
+	if (!scalar($response)) {
+		$plugin->nagios_exit(CRITICAL, $plugin->opts->command . ': no staserver found in configuration')
+	}
+
 	# return critical if all staservers are down at once
 	my $critical = 1;
 
@@ -571,7 +574,7 @@ sub check_staserver
 
 	if ( $critical == 1) { $code = CRITICAL; }
 
-	$plugin->nagios_exit($code, 'server ' . $message);
+	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
 }
 
 sub check_server
@@ -587,15 +590,19 @@ sub check_server
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$params{'objecttype'}};
 
+	if (!scalar($response)) {
+		$plugin->nagios_exit(CRITICAL, $plugin->opts->command . ': no server found in configuration')
+	}
+
 	# return critical if all servers are disabled at once
 	my $critical = 1;
 
 	# check if any server is in disabled state
 	foreach $response (@{$response}) {
 		if ($response->{'state'} ne 'ENABLED') {
-			$plugin->add_message(WARNING, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ' ;');
+			$plugin->add_message(WARNING, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ';');
 		} else {
-			$plugin->add_message(OK, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ' ;');
+			$plugin->add_message(OK, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ';');
 			$critical = 0;
 		}
 	}
@@ -604,7 +611,7 @@ sub check_server
 
 	if ( $critical == 1) { $code = CRITICAL; }
 
-	$plugin->nagios_exit($code, 'server ' . $message);
+	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
 }
 
 sub check_nsconfig
@@ -621,9 +628,9 @@ sub check_nsconfig
 	$response = $response->{$params{'objecttype'}};
 
 	if (!defined $response->{'configchanged'} || $response->{'configchanged'}) {
-		$plugin->nagios_exit(WARNING, 'nsconfig::configchanged unsaved configuration changes');
+		$plugin->nagios_exit(WARNING, $plugin->opts->command . ': unsaved configuration changes');
 	} else {
-		$plugin->nagios_exit(OK, 'nsconfig::configchanged OK');
+		$plugin->nagios_exit(OK, $plugin->opts->command . ': no unsaved configuration changes');
 	}
 }
 
@@ -653,7 +660,7 @@ sub get_hardware_info
 	$plugin->add_message(OK, 'Build Version: ' . $response->{'version'} . ';');
 
 	my ($code, $message) = $plugin->check_messages;
-	$plugin->nagios_exit($code, 'INFO: ' . $message);
+	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
 }
 
 sub get_perfdata
@@ -665,9 +672,13 @@ sub get_perfdata
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = undef;
 	$params{'options'}    = $plugin->opts->urlopts;
+	
+	if (!defined $plugin->opts->objecttype) {
+		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for objecttype');
+	}
 
 	if (!defined $plugin->opts->objectname) {
-		$plugin->nagios_die('perfdata: command requires parameter for objectname');
+		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for objectname');
 	}
 
 	my $response = nitro_client($plugin, \%params);
@@ -677,16 +688,16 @@ sub get_perfdata
 		foreach $response (@{$response}) {
 			foreach my $objectname (split(',', $plugin->opts->objectname)) {
 				if (not index($objectname, '.') != -1) {
-					$plugin->nagios_die('perfdata: return data is an array and contains multible objects. You need te seperate id and name with a ".".');
+					$plugin->nagios_die($plugin->opts->command . ': return data is an array and contains multible objects. You need te seperate id and name with a ".".');
 				}
 
 				my ($objectname_id, $objectname_name) = split /\./, $objectname;
 
 				if (not defined($response->{$objectname_id})) {
-					$plugin->nagios_die('perfdata: object id "' . $objectname_id . '" not found in output.');
+					$plugin->nagios_die($plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.');
 				}
 				if (not defined($response->{$objectname_name})) {
-					$plugin->nagios_die('perfdata: object name "' . $objectname_name . '" not found in output.');
+					$plugin->nagios_die($plugin->opts->command . ': object name "' . $objectname_name . '" not found in output.');
 				}
 
 				$plugin->add_message(OK, $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . ":" . $response->{$objectname_name} . ",");
@@ -704,7 +715,7 @@ sub get_perfdata
 	} elsif ( ref $response eq 'HASH' ) {
 		foreach my $objectname (split(',', $plugin->opts->objectname)) {
 			if (not defined($response->{$objectname})) {
-				$plugin->nagios_die('perfdata: object name "' . $objectname . '" not found in output.');
+				$plugin->nagios_die($plugin->opts->command . ': object name "' . $objectname . '" not found in output.');
 			}
 			$plugin->add_message(OK, $params{'objecttype'} . '.' . $objectname . ':', $response->{$objectname}. ',');
 
@@ -718,11 +729,11 @@ sub get_perfdata
 			);
 		}
 	} else {
-		$plugin->nagios_die('perfdata: unable to parse data. Returned data is not a HASH or ARRAY!');
+		$plugin->nagios_die($plugin->opts->command . ': unable to parse data. Returned data is not a HASH or ARRAY!');
 	}
 
 	my ($code, $message) = $plugin->check_messages;
-	$plugin->nagios_exit($code, 'perfdata: ' . $message);
+	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
 }
 
 sub check_interfaces
@@ -782,7 +793,7 @@ sub check_interfaces
 	if (scalar @interface_errors != 0 ) {
 		$message = join(', ', @interface_errors). ' - '. $message
 	}
-	$plugin->nagios_exit($code, 'Interfaces: ' . $message);
+	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
 }
 
 sub check_servicegroup
@@ -803,7 +814,7 @@ sub check_servicegroup
 	$params{'options'}    = $plugin->opts->urlopts;
 
 	if (not defined ($plugin->opts->objectname)) {
-		$plugin->nagios_die('servicegroup: no object name "-n" set');
+		$plugin->nagios_die($plugin->opts->command . ': no object name "-n" set');
 	}
 
 	my %healthy_servicegroup_states;
@@ -889,7 +900,7 @@ sub check_servicegroup
 	if (scalar @servicegroup_errors != 0 ) {
 		$message = join(', ', @servicegroup_errors). ' - '. $message
 	}
-	$plugin->nagios_exit($servicegroup_state, 'servicegroup: ' . $message);
+	$plugin->nagios_exit($servicegroup_state, $plugin->opts->command . ': ' . $message);
 }
 
 sub check_license
@@ -902,39 +913,42 @@ sub check_license
 	$params{'options'}    = $plugin->opts->urlopts;
 
 	if (!defined $plugin->opts->warning || !$plugin->opts->critical) {
-		$plugin->nagios_die('command requires parameter for warning and critical');
+		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for warning and critical');
 	}
 
 	if (!defined $plugin->opts->objectname) {
-		$plugin->nagios_die('license filename must be given as objectname via "-n"')
+		$plugin->nagios_die($plugin->opts->command . ': filename must be given as objectname via "-n"')
 	}
 
-	$params{'options'} = 'args=filelocation:'.uri_escape('/nsconfig/license').',filename:'.uri_escape($plugin->opts->objectname);
-
-	my $response = nitro_client($plugin, \%params);
-
+	my $response;
 	my @stripped;
 	my $timepiece;
 
-	foreach (split(/\n/, decode_base64($response->{'systemfile'}[0]->{'filecontent'}))) {
-		if ($_ =~ /^INCREMENT .*/) {
-			@stripped = split(' ', $_);
+	foreach (split(',', $plugin->opts->objectname)) {
+		$params{'options'} = 'args=filelocation:'.uri_escape('/nsconfig/license').',filename:'.uri_escape($_);
 
-			# date format in license file, e.g. 18-jan-2018
-			$timepiece = Time::Piece->strptime(($stripped[4], '%d-%b-%Y'));
+		$response = nitro_client($plugin, \%params);
 
-			if ($timepiece->epoch - time < (60*60*24*$plugin->opts->critical)) {
-				$plugin->add_message(CRITICAL, $stripped[1] . ' expires on ' . $stripped[4] . ';');
-			} elsif ($timepiece->epoch - time < (60*60*24*$plugin->opts->warning)) {
-				$plugin->add_message(WARNING, $stripped[1] . ' expires on ' . $stripped[4] . ';');
-			} else {
-				$plugin->add_message(OK, $stripped[1] . ' expires on ' . $stripped[4] . ';');
+		foreach (split(/\n/, decode_base64($response->{'systemfile'}[0]->{'filecontent'}))) {
+			if ($_ =~ /^INCREMENT .*/) {
+				@stripped = split(' ', $_);
+
+				# date format in license file, e.g. 18-jan-2018
+				$timepiece = Time::Piece->strptime(($stripped[4], '%d-%b-%Y'));
+
+				if ($timepiece->epoch - time < (60*60*24*$plugin->opts->critical)) {
+					$plugin->add_message(CRITICAL, $stripped[1] . ' expires on ' . $stripped[4] . ';');
+				} elsif ($timepiece->epoch - time < (60*60*24*$plugin->opts->warning)) {
+					$plugin->add_message(WARNING, $stripped[1] . ' expires on ' . $stripped[4] . ';');
+				} else {
+					$plugin->add_message(OK, $stripped[1] . ' expires on ' . $stripped[4] . ';');
+				}
 			}
 		}
 	}
 
 	my ($code, $message) = $plugin->check_messages;
-	$plugin->nagios_exit($code, 'license: ' . $message);
+	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
 }
 
 sub check_debug
