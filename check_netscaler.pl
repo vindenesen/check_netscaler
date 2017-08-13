@@ -312,10 +312,21 @@ sub check_state
 
 	my %counter;
 
-	$counter{'up'}     = 0;
-	$counter{'down'}   = 0;
-	$counter{'oos'}    = 0;
-	$counter{'unkown'} = 0;
+	# special handling for objecttype server
+	if ($plugin->opts->objecttype eq 'server') {
+		$counter{'ENABLED'}        = 0;
+		$counter{'DISABLED'}       = 0;
+	} else {
+		$counter{'UP'}             = 0;
+		$counter{'DOWN'}           = 0;
+		$counter{'OUT OF SERVICE'} = 0;
+		$counter{'UNKOWN'}         = 0;
+	}
+
+	# for servicegroups: PARTIAL-UP (not critical event)
+	if ($plugin->opts->objecttype eq 'servicegroup') {
+		$counter{'PARTIAL-UP'} = 0;
+	}
 
 	my %params;
 
@@ -331,6 +342,10 @@ sub check_state
 		$params{'endpoint'} = $plugin->opts->endpoint || 'config';
 		$field_name  = 'servicegroupname';
 		$field_state = 'servicegroupeffectivestate';
+	} elsif ($plugin->opts->objecttype eq 'server') {
+		$params{'endpoint'} = $plugin->opts->endpoint || 'config';
+		$field_name  = 'name';
+		$field_state = 'state';
 	} else {
 		$params{'endpoint'} = $plugin->opts->endpoint || 'stat';
 		$field_name  = 'name';
@@ -345,62 +360,31 @@ sub check_state
 	$response = $response->{$plugin->opts->objecttype};
 
 	foreach my $response (@{$response}) {
-		if ($response->{$field_state} eq 'UP') {
-			$counter{'up'}++;
+		if (defined ($counter{$response->{$field_state}})) {
+			$counter{$response->{$field_state}}++;
 		}
-		elsif ($response->{$field_state} eq 'DOWN') {
-			$counter{'down'}++;
-			$plugin->add_message(CRITICAL, $response->{$field_name} . ' down;');
-		}
-		elsif ($response->{$field_state} eq 'OUT OF SERVICE') {
-			$counter{'oos'}++;
-			$plugin->add_message(CRITICAL, $response->{$field_name} . ' oos;');
-		}
-		elsif ($response->{$field_state} eq 'UNKOWN') {
-			$counter{'unkown'}++;
-			$plugin->add_message(CRITICAL, $response->{$field_name} . ' unkown;');
+		if ($response->{$field_state} eq 'UP' || $response->{$field_state} eq 'ENABLED') {
+			$plugin->add_message(OK, $response->{$field_name} . ' ' . $response->{$field_state} . ';');
+		} elsif ($response->{$field_state} eq 'PARTIAL-UP' || $response->{$field_state} eq 'DISABLED') {
+			$plugin->add_message(WARNING, $response->{$field_name} . ' ' . $response->{$field_state} . ';');
 		} else {
-			$counter{'unkown'}++;
-			$plugin->add_message(CRITICAL, $response->{$field_name} . ' unknown;');
+			$plugin->add_message(CRITICAL, $response->{$field_name} . ' ' . $response->{$field_state} . ';');
 		}
 	}
+
+	foreach my $key (keys %counter) {
+		$plugin->add_message(OK, $counter{$key} . ' ' . $key . ';');
+		$plugin->add_perfdata(
+			label => $key,
+			value => $counter{$key},
+			min   => 0,
+			max   => undef,
+		);	
+	}
+
 	my ($code, $message) = $plugin->check_messages;
 
-	my $stats = ' (' . $counter{'up'} . ' up, ' . $counter{'down'} . ' down, ' . $counter{'oos'} . ' oos, ' . $counter{'unkown'} . ' unkown)';
-
-	$plugin->add_perfdata(
-		label => 'up',
-		value => $counter{'up'},
-		min   => 0,
-		max   => undef,
-	);
-
-	$plugin->add_perfdata(
-		label => 'down',
-		value => $counter{'down'},
-		min   => 0,
-		max   => undef,
-	);
-
-	$plugin->add_perfdata(
-		label => 'oos',
-		value => $counter{'oos'},
-		min   => 0,
-		max   => undef,
-	);
-
-	$plugin->add_perfdata(
-		label => 'unkown',
-		value => $counter{'unkown'},
-		min   => 0,
-		max   => undef,
-	);
-
-	if ($code == OK) {
-		$plugin->nagios_exit($code, $plugin->opts->command . ' ' . $plugin->opts->objecttype . ': OK' . $stats);
-	} else {
-		$plugin->nagios_exit($code, $plugin->opts->command . ' ' . $plugin->opts->objecttype . ': ' . $message . $stats);
-	}
+	$plugin->nagios_exit($code, $plugin->opts->command . ' ' . $plugin->opts->objecttype . ': ' . $message);
 }
 
 sub check_keyword
