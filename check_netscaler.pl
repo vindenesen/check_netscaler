@@ -40,9 +40,8 @@ my $plugin = Nagios::Plugin->new(
 	version		=> '1.3.0',
 	url		=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX/CPX)',
-	usage		=> 'Usage: %s -H <hostname> [ -u <username> ] [ -p <password> ]
--C <command> [ -o <objecttype> ] [ -n <objectname> ] [ -e <endpoint> ]
-[ -w <warning> ] [ -c <critical> ] [ -v|--verbose ] [ -s|--ssl ] [ -t <timeout> ]',
+	usage		=> 'Usage: %s -H <hostname> [ -P <port> ] [ -u <username> ] [ -p <password> ] -C <command> [ -o <objecttype> ] [ -n <objectname> ] [ -e <endpoint> ]
+[ -w <warning> ] [ -c <critical> ] [ -v|--verbose ] [ -s|--ssl ] [ -t <timeout> ] [ -x <urlopts> ]  [ -a|--api <version> ]',
 	license		=> 'http://www.apache.org/licenses/LICENSE-2.0',
  	extra		=> '
 This is a Nagios monitoring plugin for the Citrix NetScaler. The plugin works with
@@ -133,7 +132,7 @@ my @args = (
 	{
 		spec => 'api|a=s',
 		usage => '-a, --api=STRING',
-		desc => 'version of the NITRO API to use',
+		desc => 'version of the NITRO API to use (default: v1)',
 		required => 0,
 		default => 'v1',
 	}

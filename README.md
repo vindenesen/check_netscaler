@@ -45,6 +45,54 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
 yum install perl-LWP-Protocol-https
 ```
 
+## Usage
+```
+Usage: check_netscaler -H <hostname> [ -P <port> ] [ -u <username> ] [ -p <password> ]
+-C <command> [ -o <objecttype> ] [ -n <objectname> ] [ -e <endpoint> ]
+[ -w <warning> ] [ -c <critical> ] [ -v|--verbose ] [ -s|--ssl ]
+[ -t <timeout> ] [ -x <urlopts> ]  [ -a|--api <version> ]
+
+ -?, --usage
+   Print usage information
+ -h, --help
+   Print detailed help screen
+ -V, --version
+   Print version information
+ --extra-opts=[section][@file]
+   Read options from an ini file. See http://nagiosplugins.org/extra-opts
+   for usage and examples.
+ -H, --hostname=STRING
+   Hostname of the NetScaler appliance to connect to
+ -u, --username=STRING
+   Username to log into box as (default: nsroot)
+ -p, --password=STRING
+   Password for login username (default: nsroot)
+ -s, --ssl
+   Establish connection to NetScaler using SSL
+ -P, --port=INTEGER
+   Establish connection to a alternate TCP Port
+ -C, --command=STRING
+   Check to be executed on the appliance
+ -o, --objecttype=STRING
+   Objecttype (target) to for the check command
+ -n, --objectname=STRING
+   Filter request to a specific objectname
+ -e, --endpoint=STRING
+   Override option for the API endpoint (stat or config)
+ -w, --warning=STRING
+   Value for warning
+ -c, --critical=STRING
+   Value for critical
+ -x, --urlopts=STRING
+   add additional url options
+ -a, --api=STRING
+   version of the NITRO API to use (default: v1)
+ -t, --timeout=INTEGER
+   Seconds before plugin times out (default: 15)
+ -v, --verbose
+   Show details for command-line debugging (can repeat up to 3 times)
+```
+
 ## Usage Examples
 
 ### Check status of vServers
