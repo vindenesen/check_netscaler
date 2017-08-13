@@ -161,11 +161,11 @@ if ($plugin->opts->command eq 'state') {
 # be backwards compatible; also accept command 'string'
 } elsif ($plugin->opts->command eq 'matches' || $plugin->opts->command eq 'string') {
 	# check if a response does contains a specific string
-	check_string($plugin, 'matches');
+	check_keyword($plugin, 'matches');
 # be backwards compatible; also accept command 'string_not'
 } elsif ($plugin->opts->command eq 'matches_not' || $plugin->opts->command eq 'string_not') {
 	# check if a response does not contains a specific string
-	check_string($plugin, 'matches not');
+	check_keyword($plugin, 'matches not');
 } elsif ($plugin->opts->command eq 'sslcert') {
 	# check for the lifetime of installed certificates
 	check_sslcert($plugin);
@@ -403,7 +403,7 @@ sub check_state
 	}
 }
 
-sub check_string
+sub check_keyword
 {
 	my $plugin = shift;
 	my $type_of_string_comparison = shift;
@@ -435,17 +435,17 @@ sub check_string
 
 	foreach ( split(',', $plugin->opts->objectname) ) {
 		if (($type_of_string_comparison eq 'matches' && $response->{$_} eq $plugin->opts->critical) || ($type_of_string_comparison eq 'matches not' && $response->{$_} ne $plugin->opts->critical)) {
-			$plugin->add_message(CRITICAL, $plugin->opts->objecttype . '::' . $_ . ' ' . $type_of_string_comparison . ' keyword (current: ' . $response->{$_} . ', critical: ' . $plugin->opts->critical . ');');
+			$plugin->add_message(CRITICAL, $plugin->opts->objecttype . '.' . $_ . ': "' . $response->{$_} . '" ' . $type_of_string_comparison . ' keyword "' . $plugin->opts->critical . '";');
 		} elsif (($type_of_string_comparison eq 'matches' && $response->{$_} eq $plugin->opts->warning) || ($type_of_string_comparison eq 'matches not' && $response->{$_} ne $plugin->opts->warning)) {
-			$plugin->add_message(WARNING, $plugin->opts->objecttype . '::' . $_ . ' ' . $type_of_string_comparison . ' keyword (current: ' . $response->{$_} . ', warning: ' . $plugin->opts->warning . ');');
+			$plugin->add_message(WARNING, $plugin->opts->objecttype . '.' . $_ . ': "' . $response->{$_} . '" ' . $type_of_string_comparison . ' keyword "' . $plugin->opts->warning . '";');
 		} else {
-			$plugin->add_message(OK, $plugin->opts->objecttype . '::' . $_ . ' OK ('.$response->{$_}.');');
+			$plugin->add_message(OK, $plugin->opts->objecttype . '.' . $_ . ': '.$response->{$_}.';');
 		}
 	}
 
 	my ($code, $message) = $plugin->check_messages;
 
-	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
+	$plugin->nagios_exit($code, 'keyword ' . $type_of_string_comparison . ': ' . $message);
 }
 
 sub check_threshold
@@ -480,7 +480,7 @@ sub check_threshold
 
 	foreach ( split(',', $plugin->opts->objectname) ) {
 		$plugin->add_perfdata(
-			label    => $plugin->opts->objecttype . '::' . $_,
+			label    => $plugin->opts->objecttype . '.' . $_,
 			value    => $response->{$_},
 			min      => undef,
 			max      => undef,
@@ -489,16 +489,16 @@ sub check_threshold
 		);
 
 		if (($direction eq 'above' && $response->{$_} >= $plugin->opts->critical) || ($direction eq 'below' && $response->{$_} <= $plugin->opts->critical)) {
-			$plugin->add_message(CRITICAL, $plugin->opts->objecttype . '::' . $_ . ' is ' . $direction . ' threshold (current: ' . $response->{$_} . ', critical: ' . $plugin->opts->critical . ');');
+			$plugin->add_message(CRITICAL, $plugin->opts->objecttype . '.' . $_ . ' is ' . $direction . ' threshold (current: ' . $response->{$_} . ', critical: ' . $plugin->opts->critical . ');');
 		} elsif (($direction eq 'above' && $response->{$_} >= $plugin->opts->warning) || ($direction eq 'below' && $response->{$_} <= $plugin->opts->warning)) {
-			$plugin->add_message(WARNING, $plugin->opts->objecttype . '::' . $_ . ' is ' . $direction . ' threshold (current: ' . $response->{$_} . ', warning: ' . $plugin->opts->warning . ');');
+			$plugin->add_message(WARNING, $plugin->opts->objecttype . '.' . $_ . ' is ' . $direction . ' threshold (current: ' . $response->{$_} . ', warning: ' . $plugin->opts->warning . ');');
 		} else {
-			$plugin->add_message(OK, $_ . '::' . $_ . '   ('.$response->{$_}.')');
+			$plugin->add_message(OK, $_ . '.' . $_ . ': '.$response->{$_} . ';');
 		}
 	}
 
 	my ($code, $message) = $plugin->check_messages;
-	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
+	$plugin->nagios_exit($code, 'threshold ' . $plugin->opts->command . ': ' . $message);
 }
 
 sub check_sslcert
