@@ -145,7 +145,7 @@ Usage: check_netscaler
 
 ### Check status and quorum of a service group
 
-define member quorum (in percent) with warning and critical values
+Define member quorum (in percent) with warning and critical values.
 
 ```
 # NetScaler::Servicegroup::Webservers
@@ -292,8 +292,10 @@ define command {
 
 ```
 [netscaler]
+hostname=netscaler01
 username=nagios
 password=password
+ssl=true
 ```
 
 ## Authors
