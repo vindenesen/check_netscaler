@@ -6,7 +6,7 @@
 #
 # https://github.com/slauger/check_netscaler
 #
-# Version: 1.3.0 (2017-08-13)
+# Version: v1.3.0 (2017-08-13)
 #
 # Copyright 2015-2017 Simon Lauger
 #
@@ -37,7 +37,7 @@ use Time::Piece;
 my $plugin = Nagios::Plugin->new(
 	plugin		=> 'check_netscaler',
 	shortname	=> 'NetScaler',
-	version		=> '1.3.0',
+	version		=> 'v1.3.0',
 	url		=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX/CPX)',
 	usage		=> 'Usage: %s

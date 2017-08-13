@@ -204,7 +204,7 @@ Multiple fields need to be seperated by a colon.
 The license file must be placed in `/nsconfig/license` and the filename must be given as objectname.
 Also the NITRO user needs permissions to access the filesystem directly (NITRO command systemfile).
 
-Multiple fasta files can be passed, separated with a colon.
+Multiple license files can be passed, separated with a colon.
 
 ```
 # NetScaler::License
