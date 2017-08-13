@@ -7,13 +7,12 @@ Currently the plugin has the following subcommands:
 
 | command                | description |
 ---                      | --- | 
-**state**                | check the current service state of vservers (e.g. lb, vpn, gslb), services and service groups
+**state**                | check the current service state of vservers (e.g. lb, vpn, gslb), services and service groups and servers
 **matches, matches_not** | check if a string exists in the api response or not (e.g. HA or cluster status)
 **above, below**         | check if a value is above/below a threshold (e.g. traffic limits, concurrent connections)
 **sslcert**              | check the lifetime for installed ssl certificates
 **nsconfig**             | check for configuration changes which are not saved to disk
 **license**              | check the expiry date of a local installed license file
-**server**               | check status of Load Balancing Servers
 **staserver**            | check if configured STA (secure ticket authority) servers are available
 **servicegroup**         | check the state of a servicegroup and its members
 **hwinfo**               | just print information about the Netscaler itself
@@ -152,14 +151,14 @@ Define member quorum (in percent) with warning and critical values.
 ./check_netscaler.pl -H ${IPADDR} -s -C servicegroup -n sg_webservers -w 75 -c 50
 ```
 
-### Check if Load Balancing servers are enabled
+### Check status of server objects
 
 ```
-# NetScaler::Server
-./check_netscaler.pl -H ${IPADDR} -s -C server
+# NetScaler::Servers
+./check_netscaler.pl -H ${IPADDR} -s -C state -o server
 
-# NetScaler::Server
-./check_netscaler.pl -H ${IPADDR} -s -C server -n web01.example.com
+# NetScaler::Servers::web01.example.com
+./check_netscaler.pl -H ${IPADDR} -s -C state -o server -n web01.example.com
 ```
 
 ### Check for thresholds or matching strings

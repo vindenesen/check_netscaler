@@ -66,7 +66,7 @@ echo
 #echo
 
 echo NetScaler::Server
-./check_netscaler.pl --extra-opts=${section}@${1} -C server
+./check_netscaler.pl --extra-opts=${section}@${1} -C state -o server
 echo
 
 echo NetScaler::STA

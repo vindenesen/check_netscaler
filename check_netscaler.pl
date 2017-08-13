@@ -175,9 +175,6 @@ if ($plugin->opts->command eq 'state') {
 } elsif ($plugin->opts->command eq 'staserver') {
 	# check the state of the staservers
 	check_staserver($plugin);
-} elsif ($plugin->opts->command eq 'server') {
-	# check the state of the servers
-	check_server($plugin);
 } elsif ($plugin->opts->command eq 'hwinfo') {
 	# print infos about hardware and build version
 	get_hardware_info($plugin);
@@ -358,6 +355,10 @@ sub check_state
 
 	my $response = nitro_client($plugin, \%params);
 	$response = $response->{$plugin->opts->objecttype};
+
+	if (!scalar($response)) {
+		$plugin->nagios_exit(CRITICAL, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration')
+	}
 
 	foreach my $response (@{$response}) {
 		if (defined ($counter{$response->{$field_state}})) {
@@ -550,43 +551,6 @@ sub check_staserver
 			$plugin->add_message(WARNING, $response->{'staserver'} . ' unavailable;');
 		} else {
 			$plugin->add_message(OK, $response->{'staserver'} . ' OK (' . $response->{'staauthid'}.');');
-			$critical = 0;
-		}
-	}
-
-	my ($code, $message) = $plugin->check_messages;
-
-	if ( $critical == 1) { $code = CRITICAL; }
-
-	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
-}
-
-sub check_server
-{
-	my $plugin = shift;
-
-	my %params;
-	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
-	$params{'objectname'} = $plugin->opts->objectname || '';
-	$params{'options'}    = $plugin->opts->urlopts;
-	$params{'objecttype'} = 'server';
-
-	my $response = nitro_client($plugin, \%params);
-	$response = $response->{$params{'objecttype'}};
-
-	if (!scalar($response)) {
-		$plugin->nagios_exit(CRITICAL, $plugin->opts->command . ': no server found in configuration')
-	}
-
-	# return critical if all servers are disabled at once
-	my $critical = 1;
-
-	# check if any server is in disabled state
-	foreach $response (@{$response}) {
-		if ($response->{'state'} ne 'ENABLED') {
-			$plugin->add_message(WARNING, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ';');
-		} else {
-			$plugin->add_message(OK, $response->{'name'} . '('. $response->{'ipaddress'} .') ' . $response->{'state'} . ';');
 			$critical = 0;
 		}
 	}
