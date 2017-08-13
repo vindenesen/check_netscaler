@@ -33,7 +33,7 @@ If you looking for a plugin to test your NetScaler Gateway vServer and Storefron
 
 ## Installation
 
-On a Enterprise Linux machine (CentOS, RHEL) execute the following commands to install all Perl dependencies (Nagios::Plugin, LWP, JSON):
+On a Enterprise Linux machine (CentOS, RHEL) execute the following commands to install all Perl dependencies (Nagios::Plugin, LWP, JSON, Time-Piece, Data-Dumper):
 
 ```
 yum install perl-libwww-perl perl-JSON perl-Nagios-Plugin perl-Time-Piece perl-Data-Dumper
