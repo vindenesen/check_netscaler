@@ -6,7 +6,7 @@
 #
 # https://github.com/slauger/check_netscaler
 #
-# Version: 1.3.0 (2017-XX-XX)
+# Version: 1.3.0 (2017-08-13)
 #
 # Copyright 2015-2017 Simon Lauger
 #
@@ -40,8 +40,13 @@ my $plugin = Nagios::Plugin->new(
 	version		=> '1.3.0',
 	url		=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX/CPX)',
-	usage		=> 'Usage: %s -H <hostname> [ -P <port> ] [ -u <username> ] [ -p <password> ] -C <command> [ -o <objecttype> ] [ -n <objectname> ] [ -e <endpoint> ]
-[ -w <warning> ] [ -c <critical> ] [ -v|--verbose ] [ -s|--ssl ] [ -t <timeout> ] [ -x <urlopts> ]  [ -a|--api <version> ]',
+	usage		=> 'Usage: %s
+-H|--hostname=<hostname> -C|--command=<command>
+[ -o|--objecttype=<objecttype> ] [ -n|--objectname=<objectname> ]
+[ -u|--username=<username> ] [ -p|--password=<password> ]
+[ -s|--ssl ] [ -a|--api=<version> ] [ -P|--port=<port> ]
+[ -e|--endpoint=<endpoint> ] [ -w|--warning=<warning> ] [ -c|--critical=<critical> ]
+[ -v|--verbose ] [ -t|--timeout=<timeout> ] [ -x|--urlopts=<urlopts> ]',
 	license		=> 'http://www.apache.org/licenses/LICENSE-2.0',
  	extra		=> '
 This is a Nagios monitoring plugin for the Citrix NetScaler. The plugin works with
@@ -90,7 +95,7 @@ my @args = (
 	{
 		spec => 'command|C=s',
 		usage => '-C, --command=STRING',
-		desc => 'Check to be executed on the appliance',
+		desc => 'Check to be executed on the appliance.',
 		required => 1,
 	},
 	{
@@ -176,9 +181,10 @@ if ($plugin->opts->command eq 'state') {
 } elsif ($plugin->opts->command eq 'hwinfo') {
 	# print infos about hardware and build version
 	get_hardware_info($plugin);
-} elsif ($plugin->opts->command eq 'performancedata') {
+# be backwards compatible; also accept command 'performancedata'
+} elsif ($plugin->opts->command eq 'perfdata' || $plugin->opts->command eq 'performancedata') {
 	# print performance data of protocol stats
-	get_performancedata($plugin);
+	get_perfdata($plugin);
 } elsif ($plugin->opts->command eq 'interfaces') {
 	# check the state of all interfaces
 	check_interfaces($plugin);
@@ -650,7 +656,7 @@ sub get_hardware_info
 	$plugin->nagios_exit($code, 'INFO: ' . $message);
 }
 
-sub get_performancedata
+sub get_perfdata
 {
 	my $plugin = shift;
 
@@ -661,7 +667,7 @@ sub get_performancedata
 	$params{'options'}    = $plugin->opts->urlopts;
 
 	if (!defined $plugin->opts->objectname) {
-		$plugin->nagios_die('performancedata: command requires parameter for objectname');
+		$plugin->nagios_die('perfdata: command requires parameter for objectname');
 	}
 
 	my $response = nitro_client($plugin, \%params);
@@ -671,16 +677,16 @@ sub get_performancedata
 		foreach $response (@{$response}) {
 			foreach my $objectname (split(',', $plugin->opts->objectname)) {
 				if (not index($objectname, '.') != -1) {
-					$plugin->nagios_die('performancedata: return data is an array and contains multible objects. You need te seperate id and name with a ".".');
+					$plugin->nagios_die('perfdata: return data is an array and contains multible objects. You need te seperate id and name with a ".".');
 				}
 
 				my ($objectname_id, $objectname_name) = split /\./, $objectname;
 
 				if (not defined($response->{$objectname_id})) {
-					$plugin->nagios_die('performancedata: object id "' . $objectname_id . '" not found in output.');
+					$plugin->nagios_die('perfdata: object id "' . $objectname_id . '" not found in output.');
 				}
 				if (not defined($response->{$objectname_name})) {
-					$plugin->nagios_die('performancedata: object name "' . $objectname_name . '" not found in output.');
+					$plugin->nagios_die('perfdata: object name "' . $objectname_name . '" not found in output.');
 				}
 
 				$plugin->add_message(OK, $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . ":" . $response->{$objectname_name} . ",");
@@ -698,7 +704,7 @@ sub get_performancedata
 	} elsif ( ref $response eq 'HASH' ) {
 		foreach my $objectname (split(',', $plugin->opts->objectname)) {
 			if (not defined($response->{$objectname})) {
-				$plugin->nagios_die('performancedata: object name "' . $objectname . '" not found in output.');
+				$plugin->nagios_die('perfdata: object name "' . $objectname . '" not found in output.');
 			}
 			$plugin->add_message(OK, $params{'objecttype'} . '.' . $objectname . ':', $response->{$objectname}. ',');
 
@@ -712,11 +718,11 @@ sub get_performancedata
 			);
 		}
 	} else {
-		$plugin->nagios_die('performancedata: unable to parse data. Returned data is not a HASH or ARRAY!');
+		$plugin->nagios_die('perfdata: unable to parse data. Returned data is not a HASH or ARRAY!');
 	}
 
 	my ($code, $message) = $plugin->check_messages;
-	$plugin->nagios_exit($code, 'performancedata: ' . $message);
+	$plugin->nagios_exit($code, 'perfdata: ' . $message);
 }
 
 sub check_interfaces

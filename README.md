@@ -18,12 +18,12 @@ Currently the plugin has the following subcommands:
 **servicegroup**         | check the state of a servicegroup and its members
 **hwinfo**               | just print information about the Netscaler itself
 **interfaces**           | check state of all interfaces and add performance data for each interface
-**performancedata**      | gather performancedata from all sorts of API endpoints
+**perfdata**             | gather performancedata from all sorts of API endpoints
 **debug**                | debug command, print all data for a endpoint
 
 This plugin works with VPX, MPX, SDX and CPX NetScaler Appliances. The api responses may differ by build, appliance type and your installed license.
 
-The plugin supports performance data for the commands state and the above or below threshold checks. Also there is a performancedata command to gather information from your NetScaler.
+The plugin supports performance data for the commands state and the above or below threshold checks. Also there is a perfdata command to gather information from your NetScaler.
 
 Example configurations for Nagios and Icinga 2 can be found in the examples directory of this repository.
 
@@ -47,10 +47,13 @@ yum install perl-LWP-Protocol-https
 
 ## Usage
 ```
-Usage: check_netscaler -H <hostname> [ -P <port> ] [ -u <username> ] [ -p <password> ]
--C <command> [ -o <objecttype> ] [ -n <objectname> ] [ -e <endpoint> ]
-[ -w <warning> ] [ -c <critical> ] [ -v|--verbose ] [ -s|--ssl ]
-[ -t <timeout> ] [ -x <urlopts> ]  [ -a|--api <version> ]
+Usage: check_netscaler
+-H|--hostname=<hostname> -C|--command=<command>
+[ -o|--objecttype=<objecttype> ] [ -n|--objectname=<objectname> ]
+[ -u|--username=<username> ] [ -p|--password=<password> ]
+[ -s|--ssl ] [ -a|--api=<version> ] [ -P|--port=<port> ]
+[ -e|--endpoint=<endpoint> ] [ -w|--warning=<warning> ] [ -c|--critical=<critical> ]
+[ -v|--verbose ] [ -t|--timeout=<timeout> ] [ -x|--urlopts=<urlopts> ]
 
  -?, --usage
    Print usage information
@@ -237,16 +240,16 @@ All fields must be defined via "-n" option and be seperated with a comma.
 
 ```
 # NetScaler::Performancedata on Cache hit/misses
-./check_netscaler.pl -H ${IPADDR} -s -C performancedata -o ns -n cachetothits,cachetotmisses
+./check_netscaler.pl -H ${IPADDR} -s -C perfdata -o ns -n cachetothits,cachetotmisses
 
 # NetScaler::Performancedata on tcp connections
-./check_netscaler.pl -H ${IPADDR} -s -C performancedata -o ns -n tcpcurclientconn,tcpcurclientconnestablished,tcpcurserverconn,tcpcurserverconnestablished
+./check_netscaler.pl -H ${IPADDR} -s -C perfdata -o ns -n tcpcurclientconn,tcpcurclientconnestablished,tcpcurserverconn,tcpcurserverconnestablished
 
 # NetScaler::Performancedata on network interfaces
-./check_netscaler.pl -H ${IPADDR} -s -C performancedata -o Interface -n id.totrxbytes
+./check_netscaler.pl -H ${IPADDR} -s -C perfdata -o Interface -n id.totrxbytes
 
 # NetScaler::Current user sessions
-./check_netscaler.pl -H ${IPADDR} -s -C performancedata -o aaa -n aaacuricasessions,aaacuricaonlyconn
+./check_netscaler.pl -H ${IPADDR} -s -C perfdata -o aaa -n aaacuricasessions,aaacuricaonlyconn
 
 # find more object names to check out for object type "ns"
 /check_netscaler.pl -H ${IPADDR} -s -C debug -o ns
@@ -255,7 +258,7 @@ All fields must be defined via "-n" option and be seperated with a comma.
 [Global counters](https://docs.citrix.com/en-us/netscaler/12/nitro-api/nitro-rest/nitro-rest-usage-scenarios/view-individual-counter-info.html) can be accessed as follows (NetScaler 12.0 and newer).
 
 ```
-./check_netscaler.pl -H ${IPADDR} -s -C performancedata -n http_tot_Requests,http_tot_Responses -x 'args=counters:http_tot_Requests;http_tot_Responses'
+./check_netscaler.pl -H ${IPADDR} -s -C perfdata -n http_tot_Requests,http_tot_Responses -x 'args=counters:http_tot_Requests;http_tot_Responses'
 ```
 
 For more interesting performance data object types see the following API methods.
