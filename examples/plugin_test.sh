@@ -1,86 +1,98 @@
 #!/bin/bash
 
-# default ipaddr 
-if [ "${1}" = "" ];
-then
-	echo "Syntax: $0 <hostname> [<username>] [<password>] [(bool) ssl]"
-	exit 1
-else
-	IPADDR="${1}"
+if [ ! -f "${1}" ]; then
+  echo "ERROR: config file not found or not readable"
+  echo ""
+  echo "Syntax: $0 <config.ini> [<section>]"
+  echo ""
+  echo "Configuration example:"
+  echo ""
+  echo "  [netscaler]"
+  echo "  username=nsroot"
+  echo "  password=nsroot"
+  echo "  hostname=netscaler01.example.local"
+  echo "  ssl=true"
+  exit 1
 fi
 
-# default username
-if [ "${2}" = "" ];
-then
-	USERNAME="nsroot"
+if [ "${2}" != "" ]; then
+  section="${2}"
 else
-	USERNAME=${2}
+  section="netscaler"
 fi
 
-# default password
-if [ "${3}" = "" ];
-then
-        PASSWORD="nsroot"
-else
-        PASSWORD=${3}
-fi
+echo NetScaler::SSLCerts
+./check_netscaler.pl --extra-opts=${section}@${1} -C sslcert -w 30 -c 10
+echo
 
-# enable ssl
-if [ "${4}" == "true" ];
-then
-	SSL="-s"
-else
-	SSL=""
-fi
+echo NetScaler::NSConfig
+./check_netscaler.pl --extra-opts=${section}@${1} -C nsconfig
+echo
 
-if [ "${5}" = "" ];
-then
-	PORT=""
-else
-	PORT="-P ${5}"
-fi
+echo NetScaler::HWInfo
+./check_netscaler.pl --extra-opts=${section}@${1} -C hwinfo
+echo
 
-# NetScaler::SSLCerts
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C sslcert -w 30 -c 10
+echo NetScaler::Interfaces
+./check_netscaler.pl --extra-opts=${section}@${1} -C interfaces
+echo
 
-# NetScaler::NSConfig
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C nsconfig
+echo NetScaler::Perfdata::AAA
+./check_netscaler.pl --extra-opts=${section}@${1} -C performancedata -o aaa -n aaacuricasessions,aaacuricaonlyconn
+echo
 
-# NetScaler::VPNvServer::State
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C state -o vpnvserver
+echo NetScaler::VPNvServer::State
+./check_netscaler.pl --extra-opts=${section}@${1} -C state -o vpnvserver
+echo
 
-# NetScaler::LBvServer::State
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C state -o lbvserver
+echo NetScaler::LBvServer::State
+./check_netscaler.pl --extra-opts=${section}@${1} -C state -o lbvserver
+echo
 
-# NetScaler::GSLBvServer::State
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C state -o gslbvserver
+echo NetScaler::GSLBvServer::State
+./check_netscaler.pl --extra-opts=${section}@${1} -C state -o gslbvserver
+echo
 
-# NetScaler:::AAAvServer::State
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C state -o authenticationvserver
+echo NetScaler:::AAAvServer::State
+./check_netscaler.pl --extra-opts=${section}@${1} -C state -o authenticationvserver
+echo
 
-# NetScaler:::CSvServer::State
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C state -o csvserver
+echo NetScaler:::CSvServer::State
+./check_netscaler.pl --extra-opts=${section}@${1} -C state -o csvserver
+echo
 
-# NetScaler::SSLvServer::State
-#./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C state -o sslvserver
+#echo NetScaler::SSLvServer::State
+#./check_netscaler.pl --extra-opts=${section}@${1} -C state -o sslvserver
+#echo
 
-# NetScaler::System::Memory
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C above -o system -n memusagepcnt -w 75 -c 80
+echo NetScaler::Server
+./check_netscaler.pl --extra-opts=${section}@${1} -C state -o server
+echo
 
-# NetScaler::System::CPU
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C above -o system -n cpuusagepcnt -w 75 -c 80
+echo NetScaler::STA
+./check_netscaler.pl --extra-opts=${section}@${1} -C staserver
+echo
 
-# NetScaler::System::CPU::MGMT
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C above -o system -n mgmtcpuusagepcnt -w 75 -c 80
+echo NetScaler::System::Memory
+./check_netscaler.pl --extra-opts=${section}@${1} -C above -o system -n memusagepcnt -w 75 -c 80
+echo
 
-# NetScaler::System::Disk0
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C above -o system -n disk0perusage -w 75 -c 80
+echo NetScaler::System::CPU
+./check_netscaler.pl --extra-opts=${section}@${1} -C above -o system -n cpuusagepcnt,mgmtcpuusagepcnt -w 75 -c 80
+echo
 
-# NetScaler::System::Disk1
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C above -o system -n disk1perusage -w 75 -c 80
+echo NetScaler::System::Disk
+./check_netscaler.pl --extra-opts=${section}@${1} -C above -o system -n disk0perusage,disk1perusage -w 75 -c 80
+echo
 
-# NetScaler::HA::Status
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C string_not -o hanode -n hacurstatus -w YES -c YES
+echo NetScaler::HA::Status
+./check_netscaler.pl --extra-opts=${section}@${1} -C matches_not -o hanode -n hacurstatus -w YES -c YES
+echo
 
-# NetScaler::HA::State
-./check_netscaler.pl -H ${IPADDR} ${PORT} ${SSL} -u ${USERNAME} -p ${PASSWORD} -C string_not -o hanode -n hacurstate -w UP -c UP
+echo NetScaler::HA::State
+./check_netscaler.pl --extra-opts=${section}@${1} -C matches_not -o hanode -n hacurstate -w UP -c UP
+echo
+
+echo NetScaler::Perfdata::HTTP
+./check_netscaler.pl --extra-opts=${section}@${1} -C perfdata -o nsglobalcntr -n http_tot_Requests,http_tot_Responses -x 'args=counters:http_tot_Requests;http_tot_Responses'
+echo
