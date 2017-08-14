@@ -881,14 +881,19 @@ sub check_license
 				@stripped = split(' ', $_);
 
 				# date format in license file, e.g. 18-jan-2018
-				$timepiece = Time::Piece->strptime(($stripped[4], '%d-%b-%Y'));
+				if ($stripped[4] ne "permanent" ) {
 
-				if ($timepiece->epoch - time < (60*60*24*$plugin->opts->critical)) {
-					$plugin->add_message(CRITICAL, $stripped[1] . ' expires on ' . $stripped[4] . ';');
-				} elsif ($timepiece->epoch - time < (60*60*24*$plugin->opts->warning)) {
-					$plugin->add_message(WARNING, $stripped[1] . ' expires on ' . $stripped[4] . ';');
+					$timepiece = Time::Piece->strptime(($stripped[4], '%d-%b-%Y'));
+
+					if ($timepiece->epoch - time < (60*60*24*$plugin->opts->critical)) {
+						$plugin->add_message(CRITICAL, $stripped[1] . ' expires on ' . $stripped[4] . ';');
+					} elsif ($timepiece->epoch - time < (60*60*24*$plugin->opts->warning)) {
+						$plugin->add_message(WARNING, $stripped[1] . ' expires on ' . $stripped[4] . ';');
+					} else {
+						$plugin->add_message(OK, $stripped[1] . ' expires on ' . $stripped[4] . ';');
+					}
 				} else {
-					$plugin->add_message(OK, $stripped[1] . ' expires on ' . $stripped[4] . ';');
+					$plugin->add_message(OK, $stripped[1] . ' never expires;');
 				}
 			}
 		}
