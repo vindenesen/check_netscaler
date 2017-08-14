@@ -178,8 +178,7 @@ if ($plugin->opts->command eq 'state') {
 } elsif ($plugin->opts->command eq 'hwinfo') {
 	# print infos about hardware and build version
 	get_hardware_info($plugin);
-# be backwards compatible; also accept command 'performancedata'
-} elsif ($plugin->opts->command eq 'perfdata' || $plugin->opts->command eq 'performancedata') {
+} elsif ($plugin->opts->command eq 'perfdata') {
 	# print performance data of protocol stats
 	get_perfdata($plugin);
 } elsif ($plugin->opts->command eq 'interfaces') {
