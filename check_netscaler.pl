@@ -6,7 +6,7 @@
 #
 # https://github.com/slauger/check_netscaler
 #
-# Version: v1.3.0 (2017-08-13)
+# Version: v1.4.0 (2017-08-XX)
 #
 # Copyright 2015-2017 Simon Lauger
 #
@@ -37,7 +37,7 @@ use Time::Piece;
 my $plugin = Nagios::Plugin->new(
 	plugin		=> 'check_netscaler',
 	shortname	=> 'NetScaler',
-	version		=> 'v1.3.0',
+	version		=> 'v1.4.0',
 	url		=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX/CPX)',
 	usage		=> 'Usage: %s
@@ -190,6 +190,9 @@ if ($plugin->opts->command eq 'state') {
 } elsif ($plugin->opts->command eq 'license') {
 	# check a installed license file
 	check_license($plugin);
+} elsif ($plugin->opts->command eq 'ntp') {
+	# check NTP status
+	check_ntp($plugin);
 } elsif ($plugin->opts->command eq 'debug') {
 	# dump the full response of the nitro api
 	check_debug($plugin);
@@ -901,6 +904,189 @@ sub check_license
 
 	my ($code, $message) = $plugin->check_messages;
 	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
+}
+
+sub check_ntp
+{
+	my $plugin = shift;
+
+	my %params;
+	$params{'endpoint'}   = 'config';
+	$params{'objecttype'} = 'ntpsync';
+	$params{'objectname'} = undef;
+	$params{'options'}    = $plugin->opts->urlopts;
+
+	my $response = nitro_client($plugin, \%params);
+	$response = $response->{$params{'objecttype'}};
+
+	# check if syncing is even enabled
+	if ($response->{'state'} ne "ENABLED") {
+		$plugin->nagios_exit(CRITICAL, $plugin->opts->command . ': Sync ' . $response->{'state'});
+	}
+
+	my @stripped;
+	my $ntp_check_status = OK;
+	my %ntp_info;
+	$ntp_info{'synced_source'}  = undef;
+	$ntp_info{'synced_stratum'} = -1;
+	$ntp_info{'synced_offset'}  = 'unknown';
+	$ntp_info{'synced_jitter'}  = -1.000000;
+	$ntp_info{'truechimers'}    = 0;
+
+	$ntp_info{'threshold_offset_warning'} = undef;
+	$ntp_info{'threshold_offset_critical'} = undef;
+
+	$ntp_info{'threshold_stratum_warning'} = undef;
+	$ntp_info{'threshold_stratum_critical'} = undef;
+
+	$ntp_info{'threshold_jitter_warning'} = undef;
+	$ntp_info{'threshold_jitter_critical'} = undef;
+
+	$ntp_info{'threshold_truechimers_warning'} = undef;
+	$ntp_info{'threshold_truechimers_critical'} = undef;
+
+	# check ntp status
+	$params{'objecttype'} = 'ntpstatus';
+
+	$response = nitro_client($plugin, \%params);
+	$response = $response->{$params{'objecttype'}}->{'response'};
+
+	foreach (split(/\n/, $response)) {
+		my $sync_status = substr($_,0,1);
+
+		if ($sync_status eq "=" ) {
+			$ntp_info{'peer_list_started'} = 1;
+			next;
+		}
+		if ( not defined $ntp_info{'peer_list_started'} ) { next; }
+
+		@stripped = split(' ', substr($_,1, length($_)));
+
+		my $ntp_source       = $stripped[0];
+		my $ntp_peer_stratum = $stripped[2];
+		my $ntp_peer_offset  = $stripped[8];
+		my $ntp_peer_jitter  = $stripped[9];
+
+		if ($sync_status eq "*" ) {
+			$ntp_info{'synced_source'}  = $ntp_source;
+			$ntp_info{'synced_stratum'} = $ntp_peer_stratum;
+			$ntp_info{'synced_offset'}  = sprintf("%1.6f", $ntp_peer_offset / 1000);
+			$ntp_info{'synced_jitter'}  = $ntp_peer_jitter;
+		}
+
+		if ( $sync_status eq "*" || $sync_status eq "+" || $sync_status eq "-") {
+			$ntp_info{'truechimers'}++;
+		}
+	}
+
+	if ( not defined $ntp_info{'synced_source'} ) {
+		$ntp_check_status = CRITICAL;
+		$plugin->add_message(OK, 'Server not synchronized, Offset ' . $ntp_info{'synced_offset'} . ', jitter=' . $ntp_info{'synced_jitter'} . ', stratum=' . $ntp_info{'synced_stratum'} . ', truechimers=' . $ntp_info{'truechimers'});
+	} else {
+
+		# get values for WARNING and CRITICAL
+		foreach (split(/,/, $plugin->opts->warning)) {
+			my ($warning_option, $warning_value) = split(/=/,$_);
+
+			if ($warning_option eq "o") { $ntp_info{'threshold_offset_warning'} = sprintf("%1.6f", $warning_value); }
+			if ($warning_option eq "j") { $ntp_info{'threshold_jitter_warning'} = sprintf("%1.3f", $warning_value); }
+			if ($warning_option eq "s") { $ntp_info{'threshold_stratum_warning'} = $warning_value; }
+			if ($warning_option eq "t") { $ntp_info{'threshold_truechimers_warning'} = $warning_value; }
+		}
+
+		foreach (split(/,/, $plugin->opts->critical)) {
+			my ($critical_option, $critical_value) = split(/=/,$_);
+
+			if ($critical_option eq "o") { $ntp_info{'threshold_offset_critical'} = sprintf("%1.6f", $critical_value); }
+			if ($critical_option eq "j") { $ntp_info{'threshold_jitter_critical'} = sprintf("%1.3f", $critical_value); }
+			if ($critical_option eq "s") { $ntp_info{'threshold_stratum_critical'} = $critical_value; }
+			if ($critical_option eq "t") { $ntp_info{'threshold_truechimers_critical'} = $critical_value; }
+		}
+
+		# now check thresholds
+		my $output_text;
+
+		# offset
+		$output_text = 'Offset ' . $ntp_info{'synced_offset'}. ' secs';
+		if ( defined $ntp_info{'threshold_offset_critical'} && ($ntp_info{'synced_offset'} >= $ntp_info{'threshold_offset_critical'} || $ntp_info{'synced_offset'} <= 0 - $ntp_info{'threshold_offset_critical'} )) {
+			$ntp_check_status = CRITICAL;
+			$output_text .= ' (CRITCAL)';
+		} elsif ( defined $ntp_info{'threshold_offset_warning'} && ($ntp_info{'synced_offset'} >= $ntp_info{'threshold_offset_warning'} || $ntp_info{'synced_offset'} <= 0 - $ntp_info{'threshold_offset_warning'} )) {
+			if ( $ntp_check_status ne CRITICAL ) { $ntp_check_status = WARNING };
+			$output_text .= ' (WARNING)';
+		}
+		$plugin->add_message(OK, $output_text);
+
+		# jitter
+		$output_text = 'jitter=' . $ntp_info{'synced_jitter'};
+		if ( defined $ntp_info{'threshold_jitter_critical'} && $ntp_info{'synced_jitter'} >= $ntp_info{'threshold_jitter_critical'}) {
+			$ntp_check_status = CRITICAL;
+			$output_text .= ' (CRITCAL)';
+		} elsif ( defined $ntp_info{'threshold_jitter_warning'} && $ntp_info{'synced_jitter'} >= $ntp_info{'threshold_jitter_warning'}) {
+			if ( $ntp_check_status ne CRITICAL ) { $ntp_check_status = WARNING };
+			$output_text .= ' (WARNING)';
+		}
+		$plugin->add_message(OK, $output_text);
+
+		# stratum
+		$output_text = 'stratum=' . $ntp_info{'synced_stratum'};
+		if ( defined $ntp_info{'threshold_stratum_critical'} && $ntp_info{'synced_stratum'} > $ntp_info{'threshold_stratum_critical'}) {
+			$ntp_check_status = CRITICAL;
+			$output_text .= ' (CRITCAL)';
+		} elsif ( defined $ntp_info{'threshold_stratum_warning'} && $ntp_info{'synced_stratum'} > $ntp_info{'threshold_stratum_warning'}) {
+			if ( $ntp_check_status ne CRITICAL ) { $ntp_check_status = WARNING };
+			$output_text .= ' (WARNING)';
+		}
+		$plugin->add_message(OK, $output_text);
+
+		# truechimers
+		$output_text = 'truechimers=' . $ntp_info{'truechimers'};
+		if ( defined $ntp_info{'threshold_truechimers_critical'} && $ntp_info{'truechimers'} <= $ntp_info{'threshold_truechimers_critical'}) {
+			$ntp_check_status = CRITICAL;
+			$output_text .= ' (CRITCAL)';
+		} elsif ( defined $ntp_info{'threshold_truechimers_warning'} && $ntp_info{'truechimers'} <= $ntp_info{'threshold_truechimers_warning'}) {
+			if ( $ntp_check_status ne CRITICAL ) { $ntp_check_status = WARNING };
+			$output_text .= ' (WARNING)';
+		}
+		$plugin->add_message(OK, $output_text);
+
+		# add perfdata
+		$plugin->add_perfdata(
+			label    => "offset",
+			value    => $ntp_info{'synced_offset'}.'s',
+			min      => undef,
+			max      => undef,
+			warning  => $ntp_info{'threshold_offset_warning'},
+			critical => $ntp_info{'threshold_offset_critical'},
+		);
+		$plugin->add_perfdata(
+			label    => "jitter",
+			value    => $ntp_info{'synced_jitter'},
+			min      => 0,
+			max      => undef,
+			warning  => $ntp_info{'threshold_jitter_warning'},
+			critical => $ntp_info{'threshold_jitter_critical'},
+		);
+		$plugin->add_perfdata(
+			label    => "stratum",
+			value    => $ntp_info{'synced_stratum'},
+			min      => 0,
+			max      => 16,
+			warning  => $ntp_info{'threshold_stratum_warning'},
+			critical => $ntp_info{'threshold_stratum_critical'},
+		);
+		$plugin->add_perfdata(
+			label    => "truechimers",
+			value    => $ntp_info{'truechimers'},
+			min      => 0,
+			max      => undef,
+			warning  => $ntp_info{'threshold_truechimers_warning'},
+			critical => $ntp_info{'threshold_truechimers_critical'},
+		);
+	}
+
+	my ($code, $message) = $plugin->check_messages( join => ", ", join_all => 1);
+	$plugin->nagios_exit($ntp_check_status, $plugin->opts->command . ': ' . $message);
 }
 
 sub check_debug

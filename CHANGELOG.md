@@ -1,3 +1,5 @@
+## v1.4.0 (2017-08-XX)
+- added command ntp to check NTP status (#18)
 ## v1.3.0 (2017-08-13)
 - added command license to check the status of a local license file (#17)
 - added perl-Time-Piece as new dependency (Time::Piece for license check)

@@ -18,6 +18,7 @@ Currently the plugin has the following subcommands:
 **hwinfo**               | just print information about the Netscaler itself
 **interfaces**           | check state of all interfaces and add performance data for each interface
 **perfdata**             | gather performancedata from all sorts of API endpoints
+**ntp**                  | check the ntp synchronization status
 **debug**                | debug command, print all data for a endpoint
 
 This plugin works with VPX, MPX, SDX and CPX NetScaler Appliances. The api responses may differ by build, appliance type and your installed license.
@@ -269,6 +270,29 @@ For more interesting performance data object types see the following API methods
 - protocolhttp
 - protocolip
 - protocoltcp
+
+### check NTP status
+This is pretty much a reimplementation of [check_ntp_peer](https://github.com/monitoring-plugins/monitoring-plugins/blob/master/plugins/check_ntp_peer.c). Output format and performance data should match to 99%.
+Also the behaviour of the warning and critical threshold checking got matched to check_ntp_peer.
+To avoid adding a couple of extra command line options the thresholds can be set with following options. Format: "option=value". They have to be comma separated.
+* o -> offset
+* s -> stratum
+* j -> jitter
+* t -> truechimers
+
+```
+# check NTP status
+./check_netscaler.pl -H ${IPADDR} -s -C ntp -w o=0.03,j=100,s=1,t=3 -c o=0.05,j=200,s=2,t=2
+```
+This means:
+* offset WARNING if peer offset is >= 30 ms or <= - 30 ms
+* jitter WARNING if jitter is >= 100 ms
+* stratum WARNING if peer stratum > 1
+* truechimers WARNING if number of truechimers (possible sync sources) is <= 3
+* offset CRITICAL if peer offset is >= 50 ms or <= - 50 ms
+* jitter CRITICAL if jitter is >= 200 ms
+* stratum CRITICAL if peer stratum > 2
+* truechimers CRITICAL if number of truechimers (possible sync sources) is <= 2
 
 ## Debug command
 
