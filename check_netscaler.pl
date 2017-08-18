@@ -609,7 +609,7 @@ sub check_threshold_and_get_perfdata
 				} elsif (defined $plugin->opts->warning && ($direction eq 'above' && $response->{$objectname_name} >= $plugin->opts->warning) || ($direction eq 'below' && $response->{$objectname_name} <= $plugin->opts->warning)) {
 					$plugin->add_message(WARNING, $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . ' is ' . $direction . ' threshold (current: ' . $response->{$objectname_name} . ', warning: ' . $plugin->opts->warning . ')');
 				} else {
-					$plugin->add_message(OK, $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . ":" . $response->{$objectname_name});
+					$plugin->add_message(OK, $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . ': ' . $response->{$objectname_name});
 				}
 
 				$plugin->add_perfdata(
@@ -634,7 +634,7 @@ sub check_threshold_and_get_perfdata
 			} elsif (defined $plugin->opts->warning && ($direction eq 'above' && $response->{$objectname} >= $plugin->opts->warning) || ($direction eq 'below' && $response->{$objectname} <= $plugin->opts->warning)) {
 				$plugin->add_message(WARNING, $params{'objecttype'} . '.' . $objectname . ' is ' . $direction . ' threshold (current: ' . $response->{$objectname} . ', warning: ' . $plugin->opts->warning . ')');
 			} else {
-				$plugin->add_message(OK, $params{'objecttype'} . '.' . $objectname . ':', $response->{$objectname});
+				$plugin->add_message(OK, $params{'objecttype'} . '.' . $objectname . ': ' . $response->{$objectname});
 			}
 
 			$plugin->add_perfdata(
