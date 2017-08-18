@@ -8,11 +8,12 @@ Currently the plugin has the following subcommands:
 | command                | description |
 ---                      | --- | 
 **state**                | check the current service state of vservers (e.g. lb, vpn, gslb), services and service groups and servers
-**matches, matches_not** | check if a string exists in the api response or not (e.g. HA or cluster status)
+**matches, matches_not** | check if a string matches the the api response or not
 **above, below**         | check if a value is above/below a threshold (e.g. traffic limits, concurrent connections)
 **sslcert**              | check the lifetime for installed ssl certificates
 **nsconfig**             | check for configuration changes which are not saved to disk
 **license**              | check the expiry date of a local installed license file
+**hastatus**             | check the high availability status of a appliance
 **staserver**            | check if configured STA (secure ticket authority) servers are available
 **servicegroup**         | check the state of a servicegroup and its members
 **hwinfo**               | just print information about the Netscaler itself
@@ -210,6 +211,13 @@ Multiple license files can be passed, separated with a colon.
 ```
 # NetScaler::License
 ./check_netscaler.pl -H ${IPADDR} -s -C license -n FID_4c9a2c7e_14292ea2df2_2a97.lic,FID_2b9a2c7e_14212ef2d27_4b87.lic -w 30 -c 10
+```
+
+### Check the current high availability status
+
+```
+# NetScaler::HA
+./check_netscaler.pl -H ${IPADDR} -s -C hastatus
 ```
 
 ### Check if STA servers are working

@@ -180,7 +180,7 @@ if ($plugin->opts->command eq 'state') {
 	get_hardware_info($plugin);
 } elsif ($plugin->opts->command eq 'perfdata') {
 	# print performance data of protocol stats
-	check_threshold_and_get_perfdata($plugin, "above");
+	check_threshold_and_get_perfdata($plugin, 'above');
 } elsif ($plugin->opts->command eq 'interfaces') {
 	# check the state of all interfaces
 	check_interfaces($plugin);
@@ -190,6 +190,9 @@ if ($plugin->opts->command eq 'state') {
 } elsif ($plugin->opts->command eq 'license') {
 	# check a installed license file
 	check_license($plugin);
+} elsif ($plugin->opts->command eq 'hastatus') {
+	# check the HA status of a node
+	check_hastatus($plugin);
 } elsif ($plugin->opts->command eq 'ntp') {
 	# check NTP status
 	check_ntp($plugin);
@@ -868,6 +871,85 @@ sub check_license
 				}
 			}
 		}
+	}
+
+	my ($code, $message) = $plugin->check_messages;
+	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
+}
+
+sub check_hastatus
+{
+	my $plugin = shift;
+
+	my %params;
+	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
+	$params{'objecttype'} = $plugin->opts->objecttype || 'hanode';
+	$params{'objectname'} = $plugin->opts->objecttype;
+	$params{'options'}    = $plugin->opts->urlopts;
+
+	my $response = nitro_client($plugin, \%params);
+	$response = $response->{$params{'objecttype'}};
+
+	if ($response->{'hacurstatus'} ne 'YES') {
+		$plugin->nagios_exit(CRITICAL, $plugin->opts->command . ': appliance is not configured for high availability')
+	}
+
+	my %hastatus;
+
+    # current ha master state
+	$hastatus{'PRIMARY'}          = OK;
+	$hastatus{'SECONDARY'}        = OK;
+	$hastatus{'STAYSECONDARY'}    = WARNING;
+	$hastatus{'CLAIMING'}         = WARNING;
+	$hastatus{'FORCE CHANGE'}     = WARNING;
+
+    # current ha status
+	$hastatus{'UP'}               = OK;
+	$hastatus{'DISABLED'}         = WARNING;
+	$hastatus{'INIT'}             = WARNING;
+	$hastatus{'DUMB'}             = WARNING;
+	$hastatus{'PARTIALFAIL'}      = CRITICAL;
+	$hastatus{'COMPLETEFAIL'}     = CRITICAL;
+	$hastatus{'PARTIALFAILSSL'}   = CRITICAL;
+	$hastatus{'ROUTEMONITORFAIL'} = CRITICAL;
+
+	my $index = undef;
+
+	foreach ('hacurmasterstate', 'hacurstate') {
+		$index = uc($response->{$_});
+		if (defined($hastatus{$index})) {
+			$plugin->add_message($hastatus{$index}, $_ . ' ' . $response->{$_} . ';');
+		} else {
+			$plugin->add_message(CRITICAL, $_ . ' ' . $response->{$_} . ';');
+		}
+	}
+
+	# make use of warning and critical parameters?
+	if ($response->{'haerrsyncfailure'} > 0) {
+		$plugin->add_message(WARNING, 'ha sync failed ' . $response->{'haerrsyncfailure'} . ' times');
+	}
+
+	# ... haerrproptimeout here ...
+
+	my $measurement = undef;
+
+	foreach ('hatotpktrx', 'hatotpkttx', 'hapktrxrate', 'hapkttxrate') {
+		if ($_ eq 'hatotpktrx' || $_ eq 'hatotpkttx') {
+			$measurement = 'c'
+		} elsif ($_ eq 'hapktrxrate' || $_ eq 'hapkttxrate') {
+			$measurement = 'a'
+		} else {
+			$measurement = undef;		
+		}
+
+		$plugin->add_perfdata(
+			label    => $_,
+			value    => $response->{$_} . $measurement,
+			min      => 0,
+			max      => undef,
+			warning  => undef,
+			critical => undef,
+		);
 	}
 
 	my ($code, $message) = $plugin->check_messages;
