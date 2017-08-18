@@ -96,3 +96,7 @@ echo
 echo NetScaler::Perfdata::HTTP
 ./check_netscaler.pl --extra-opts=${section}@${1} -C perfdata -o nsglobalcntr -n http_tot_Requests,http_tot_Responses -x 'args=counters:http_tot_Requests;http_tot_Responses'
 echo
+
+echo NetScaler::NTP
+./check_netscaler.pl --extra-opts=${section}@${1} -C ntp -w 'o=0.03,j=100' -c 'o=0.05,j=200'
+echo
