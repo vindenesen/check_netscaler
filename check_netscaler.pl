@@ -154,10 +154,10 @@ if ($plugin->opts->command eq 'state') {
 	check_state($plugin);
 } elsif ($plugin->opts->command eq 'above') {
 	# check if a response is above a threshold
-	check_threshold($plugin, $plugin->opts->command);
+	check_threshold_and_get_perfdata($plugin, $plugin->opts->command);
 } elsif ($plugin->opts->command eq 'below') {
 	# check if a response is below  a threshold
-	check_threshold($plugin, $plugin->opts->command);
+	check_threshold_and_get_perfdata($plugin, $plugin->opts->command);
 # be backwards compatible; also accept command 'string'
 } elsif ($plugin->opts->command eq 'matches' || $plugin->opts->command eq 'string') {
 	# check if a response does contains a specific string
@@ -180,7 +180,7 @@ if ($plugin->opts->command eq 'state') {
 	get_hardware_info($plugin);
 } elsif ($plugin->opts->command eq 'perfdata') {
 	# print performance data of protocol stats
-	get_perfdata($plugin);
+	check_threshold_and_get_perfdata($plugin, "above");
 } elsif ($plugin->opts->command eq 'interfaces') {
 	# check the state of all interfaces
 	check_interfaces($plugin);
@@ -234,7 +234,8 @@ sub add_arg
 	);
 }
 
-sub nitro_client {
+sub nitro_client
+{
 
 	my $plugin  = shift;
 	my $params  = shift;
@@ -382,7 +383,7 @@ sub check_state
 			value => $counter{$key},
 			min   => 0,
 			max   => undef,
-		);	
+		);
 	}
 
 	my ($code, $message) = $plugin->check_messages;
@@ -433,59 +434,6 @@ sub check_keyword
 	my ($code, $message) = $plugin->check_messages;
 
 	$plugin->nagios_exit($code, 'keyword ' . $type_of_string_comparison . ': ' . $message);
-}
-
-sub check_threshold
-{
-	my $plugin = shift;
-	my $direction = shift;
-
-	if (!defined $plugin->opts->objecttype) {
-		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for objecttype');
-	}
-
-	if (!defined $plugin->opts->objectname) {
-		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for objectname');
-	}
-
-	if (!defined $plugin->opts->warning || !defined $plugin->opts->critical) {
-		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for warning and critical');
-	}
-
-	if ($direction ne 'above' && $direction ne 'below') {
-		$plugin->nagios_die($plugin->opts->command . ': threshold can only be checked for "above" and "below"');
-	}
-
-	my %params;
-	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
-	$params{'objecttype'} = $plugin->opts->objecttype;
-	$params{'objectname'} = undef;
-	$params{'options'}    = $plugin->opts->urlopts;
-
-	my $response = nitro_client($plugin, \%params);
-	$response = $response->{$plugin->opts->objecttype};
-
-	foreach ( split(',', $plugin->opts->objectname) ) {
-		$plugin->add_perfdata(
-			label    => $plugin->opts->objecttype . '.' . $_,
-			value    => $response->{$_},
-			min      => undef,
-			max      => undef,
-			warning  => $plugin->opts->warning,
-			critical => $plugin->opts->critical,
-		);
-
-		if (($direction eq 'above' && $response->{$_} >= $plugin->opts->critical) || ($direction eq 'below' && $response->{$_} <= $plugin->opts->critical)) {
-			$plugin->add_message(CRITICAL, $plugin->opts->objecttype . '.' . $_ . ' is ' . $direction . ' threshold (current: ' . $response->{$_} . ', critical: ' . $plugin->opts->critical . ');');
-		} elsif (($direction eq 'above' && $response->{$_} >= $plugin->opts->warning) || ($direction eq 'below' && $response->{$_} <= $plugin->opts->warning)) {
-			$plugin->add_message(WARNING, $plugin->opts->objecttype . '.' . $_ . ' is ' . $direction . ' threshold (current: ' . $response->{$_} . ', warning: ' . $plugin->opts->warning . ');');
-		} else {
-			$plugin->add_message(OK, $_ . '.' . $_ . ': '.$response->{$_} . ';');
-		}
-	}
-
-	my ($code, $message) = $plugin->check_messages;
-	$plugin->nagios_exit($code, 'threshold ' . $plugin->opts->command . ': ' . $message);
 }
 
 sub check_sslcert
@@ -613,22 +561,27 @@ sub get_hardware_info
 	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
 }
 
-sub get_perfdata
+sub check_threshold_and_get_perfdata
 {
 	my $plugin = shift;
+	my $direction = shift;
 
 	my %params;
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'stat';
 	$params{'objecttype'} = $plugin->opts->objecttype;
 	$params{'objectname'} = undef;
 	$params{'options'}    = $plugin->opts->urlopts;
-	
+
 	if (!defined $plugin->opts->objecttype) {
 		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for objecttype');
 	}
 
 	if (!defined $plugin->opts->objectname) {
 		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for objectname');
+	}
+
+	if ($direction ne 'above' && $direction ne 'below') {
+		$plugin->nagios_die($plugin->opts->command . ': threshold can only be checked for "above" and "below"');
 	}
 
 	my $response = nitro_client($plugin, \%params);
@@ -650,7 +603,14 @@ sub get_perfdata
 					$plugin->nagios_die($plugin->opts->command . ': object name "' . $objectname_name . '" not found in output.');
 				}
 
-				$plugin->add_message(OK, $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . ":" . $response->{$objectname_name} . ",");
+				# check thresholds
+				if (defined $plugin->opts->critical && ($direction eq 'above' && $response->{$objectname_name} >= $plugin->opts->critical) || ($direction eq 'below' && $response->{$objectname_name} <= $plugin->opts->critical)) {
+					$plugin->add_message(CRITICAL, $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . ' is ' . $direction . ' threshold (current: ' . $response->{$objectname_name} . ', critical: ' . $plugin->opts->critical . ')');
+				} elsif (defined $plugin->opts->warning && ($direction eq 'above' && $response->{$objectname_name} >= $plugin->opts->warning) || ($direction eq 'below' && $response->{$objectname_name} <= $plugin->opts->warning)) {
+					$plugin->add_message(WARNING, $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . ' is ' . $direction . ' threshold (current: ' . $response->{$objectname_name} . ', warning: ' . $plugin->opts->warning . ')');
+				} else {
+					$plugin->add_message(OK, $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . ":" . $response->{$objectname_name});
+				}
 
 				$plugin->add_perfdata(
 					label    => "'" . $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . "'",
@@ -667,7 +627,15 @@ sub get_perfdata
 			if (not defined($response->{$objectname})) {
 				$plugin->nagios_die($plugin->opts->command . ': object name "' . $objectname . '" not found in output.');
 			}
-			$plugin->add_message(OK, $params{'objecttype'} . '.' . $objectname . ':', $response->{$objectname}. ',');
+
+			# check thresholds
+			if (defined $plugin->opts->critical && ($direction eq 'above' && $response->{$objectname} >= $plugin->opts->critical) || ($direction eq 'below' && $response->{$objectname} <= $plugin->opts->critical)) {
+				$plugin->add_message(CRITICAL, $params{'objecttype'} . '.' . $objectname . ' is ' . $direction . ' threshold (current: ' . $response->{$objectname} . ', critical: ' . $plugin->opts->critical . ')');
+			} elsif (defined $plugin->opts->warning && ($direction eq 'above' && $response->{$objectname} >= $plugin->opts->warning) || ($direction eq 'below' && $response->{$objectname} <= $plugin->opts->warning)) {
+				$plugin->add_message(WARNING, $params{'objecttype'} . '.' . $objectname . ' is ' . $direction . ' threshold (current: ' . $response->{$objectname} . ', warning: ' . $plugin->opts->warning . ')');
+			} else {
+				$plugin->add_message(OK, $params{'objecttype'} . '.' . $objectname . ':', $response->{$objectname});
+			}
 
 			$plugin->add_perfdata(
 				label    => "'" . $params{'objecttype'} . '.' . $objectname . "'",
@@ -682,7 +650,7 @@ sub get_perfdata
 		$plugin->nagios_die($plugin->opts->command . ': unable to parse data. Returned data is not a HASH or ARRAY!');
 	}
 
-	my ($code, $message) = $plugin->check_messages;
+	my ($code, $message) = $plugin->check_messages( join => "; ", join_all => "; ");
 	$plugin->nagios_exit($code, $plugin->opts->command . ': ' . $message);
 }
 
@@ -1085,7 +1053,7 @@ sub check_ntp
 		);
 	}
 
-	my ($code, $message) = $plugin->check_messages( join => ", ", join_all => 1);
+	my ($code, $message) = $plugin->check_messages( join => ", ", join_all => ", ");
 	$plugin->nagios_exit($ntp_check_status, $plugin->opts->command . ': ' . $message);
 }
 
