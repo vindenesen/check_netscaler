@@ -31,10 +31,10 @@ use JSON;
 use URI::Escape;
 use MIME::Base64;
 use Data::Dumper;
-use Nagios::Plugin;
+use Monitoring::Plugin;
 use Time::Piece;
 
-my $plugin = Nagios::Plugin->new(
+my $plugin = Monitoring::Plugin->new(
 	plugin		=> 'check_netscaler',
 	shortname	=> 'NetScaler',
 	version		=> 'v1.4.0',

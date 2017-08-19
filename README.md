@@ -1,6 +1,6 @@
 # check_netscaler Nagios Plugin
 
-A Nagios Plugin written for the Citrix NetScaler Application Delivery Controller. It's based on Perl (Nagios::Plugin) and using the the NITRO REST API. No need for SNMP.
+A Nagios Plugin written for the Citrix NetScaler Application Delivery Controller. It's based on Perl (Monitoring::Plugin) and using the the NITRO REST API. No need for SNMP.
 
 Currently the plugin has the following subcommands:
 
@@ -34,16 +34,33 @@ If you looking for a plugin to test your NetScaler Gateway vServer and Storefron
 
 ## Installation
 
-On a Enterprise Linux machine (CentOS, RHEL) execute the following commands to install all Perl dependencies (Nagios::Plugin, LWP, JSON, Time-Piece, Data-Dumper):
+### Enterprise Linux (CentOS, RedHat)
+
+On a Enterprise Linux machine (CentOS, RHEL) execute the following commands to install all Perl dependencies (Monitoring::Plugin, LWP, JSON, Time::Piece, Data::Dumper):
 
 ```
-yum install perl-libwww-perl perl-JSON perl-Nagios-Plugin perl-Time-Piece perl-Data-Dumper
+yum install perl-libwww-perl perl-JSON perl-Monitoring-Plugin perl-Time-Piece perl-Data-Dumper
 ```
 
 If you want to connect to your NetScaler with SSL/HTTPS you should also install the LWP HTTPS package.
 
 ```
 yum install perl-LWP-Protocol-https
+```
+
+### Mac OS X
+
+The preinstalled Perl distribution is missing the JSON and Monitoring::Plugin libaries. The best way is to install them is trough the cpanminus tool. The cpanminus tool can be installed trough [brew](https://github.com/Homebrew/brew).
+
+```
+brew install cpanminus
+```
+
+Use the following commands to install the missing perl libaries.
+
+```
+sudo cpanm JSON
+sudo cpanm Monitoring::Plugin
 ```
 
 ## Usage
@@ -314,7 +331,7 @@ This means:
 
 ## Configuration File
 
-The plugin uses the Nagios::Plugin Libary, so you can use --extra-opts and seperate the login crendetials from your nagios configuration.
+The plugin uses the Monitoring::Plugin Libary, so you can use --extra-opts and seperate the login crendetials from your nagios configuration.
 
 ```
 define command {
