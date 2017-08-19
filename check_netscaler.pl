@@ -332,6 +332,7 @@ sub check_state
 
 	# performance data for service and vservers
 	# if you want some performance data for your service groups please use the check_servicegroup command
+	# see https://www.icinga.com/docs/icinga1/latest/de/perfdata.html
 	my %perfdata;
 	$perfdata{'totalrequests'}      = 'c';
 	$perfdata{'requestsrate'}       = undef;
@@ -960,10 +961,13 @@ sub check_hastatus
 
 	# make use of warning and critical parameters?
 	if ($response->{'haerrsyncfailure'} > 0) {
-		$plugin->add_message(WARNING, 'ha sync failed ' . $response->{'haerrsyncfailure'} . ' times');
+		$plugin->add_message(WARNING, 'ha sync failed ' . $response->{'haerrsyncfailure'} . ' times;');
 	}
 
-	# ... haerrproptimeout here ...
+	# make use of warning and critical parameters?
+	if ($response->{'haerrproptimeout'} > 0) {
+		$plugin->add_message(WARNING, 'ha propagation timed out ' . $response->{'haerrproptimeout'} . ' times;');
+	}
 
 	my $measurement = undef;
 
@@ -978,7 +982,8 @@ sub check_hastatus
 
 		$plugin->add_perfdata(
 			label    => $_,
-			value    => $response->{$_} . $measurement,
+			value    => $response->{$_},
+			uom      => $measurement,
 			min      => 0,
 			max      => undef,
 			warning  => undef,
