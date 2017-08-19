@@ -314,7 +314,6 @@ sub check_state
 	}
 
 	my %counter;
-
 	# special handling for objecttype server
 	if ($plugin->opts->objecttype eq 'server') {
 		$counter{'ENABLED'}        = 0;
@@ -324,35 +323,52 @@ sub check_state
 		$counter{'DOWN'}           = 0;
 		$counter{'OUT OF SERVICE'} = 0;
 		$counter{'UNKOWN'}         = 0;
+		
+		# for servicegroups: PARTIAL-UP (non critical event)
+		if ($plugin->opts->objecttype eq 'servicegroup') {
+			$counter{'PARTIAL-UP'} = 0;
+		}
 	}
 
-	# for servicegroups: PARTIAL-UP (not critical event)
-	if ($plugin->opts->objecttype eq 'servicegroup') {
-		$counter{'PARTIAL-UP'} = 0;
-	}
+	# performance data for service and vservers
+	# if you want some performance data for your service groups please use the check_servicegroup command
+	my %perfdata;
+	$perfdata{'totalrequests'}      = 'c';
+	$perfdata{'requestsrate'}       = undef;
+	$perfdata{'totalresponses'}     = 'c';
+	$perfdata{'responsesrate'}      = undef;
+	$perfdata{'totalrequestbytes'}  = 'B';
+	$perfdata{'requestbytesrate'}   = undef;
+	$perfdata{'totalresponsebytes'} = 'B';
+	$perfdata{'responsebytesrate'}  = undef;
 
 	my %params;
 
-	my $field_name;
-	my $field_state;
+	my $field_name      = undef;
+	my $field_state     = undef;
+	my $enable_perfdata = undef;
 
 	# well, i guess the citrix api developers were drunk
 	if ($plugin->opts->objecttype eq 'service') {
 		$params{'endpoint'} = $plugin->opts->endpoint || 'config';
-		$field_name  = 'name';
-		$field_state = 'svrstate';
+		$field_name      = 'name';
+		$field_state     = 'svrstate';
+		$enable_perfdata = 1;
 	} elsif ($plugin->opts->objecttype eq 'servicegroup') {
 		$params{'endpoint'} = $plugin->opts->endpoint || 'config';
-		$field_name  = 'servicegroupname';
-		$field_state = 'servicegroupeffectivestate';
+		$field_name      = 'servicegroupname';
+		$field_state     = 'servicegroupeffectivestate';
+		$enable_perfdata = 0;
 	} elsif ($plugin->opts->objecttype eq 'server') {
 		$params{'endpoint'} = $plugin->opts->endpoint || 'config';
-		$field_name  = 'name';
-		$field_state = 'state';
+		$field_name      = 'name';
+		$field_state     = 'state';
+		$enable_perfdata = 0;
 	} else {
 		$params{'endpoint'} = $plugin->opts->endpoint || 'stat';
-		$field_name  = 'name';
-		$field_state = 'state';
+		$field_name      = 'name';
+		$field_state     = 'state';
+		$enable_perfdata = 1;
 	}
 
 	$params{'objecttype'} = $plugin->opts->objecttype;
@@ -366,6 +382,7 @@ sub check_state
 		$plugin->nagios_exit(CRITICAL, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration')
 	}
 
+	# loop around, check states and increment the counters
 	foreach my $response (@{$response}) {
 		if (defined ($counter{$response->{$field_state}})) {
 			$counter{$response->{$field_state}}++;
@@ -377,16 +394,33 @@ sub check_state
 		} else {
 			$plugin->add_message(CRITICAL, $response->{$field_name} . ' ' . $response->{$field_state} . ';');
 		}
+
+		# add performance data only if we are dealing with a single object
+		if (defined($plugin->opts->objectname) && $enable_perfdata) {
+			foreach my $perfdata_field (keys %perfdata) {
+				$plugin->add_perfdata(
+					label => $response->{$field_name} . ' ' . $perfdata_field,
+					value => $response->{$perfdata_field},
+					uom   => $perfdata{$perfdata_field},
+					min   => 0,
+					max   => undef,
+				);
+			}
+		}
 	}
 
-	foreach my $key (keys %counter) {
-		$plugin->add_message(OK, $counter{$key} . ' ' . $key . ';');
-		$plugin->add_perfdata(
-			label => $key,
-			value => $counter{$key},
-			min   => 0,
-			max   => undef,
-		);
+	# a global counter is pretty useless for a single object
+	if (!defined($plugin->opts->objectname)) {
+		foreach my $key (keys %counter) {
+			$plugin->add_message(OK, $counter{$key} . ' ' . $key . ';');
+			$plugin->add_perfdata(
+				label => $key,
+				value => $counter{$key},
+				uom   => undef,
+				min   => 0,
+				max   => undef,
+			);
+		}
 	}
 
 	my ($code, $message) = $plugin->check_messages;
