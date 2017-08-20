@@ -1,0 +1,12 @@
+---
+language: perl
+perl:
+  - "5.24"
+  - "5.22"
+  - "5.20"
+  - "5.18"
+  - "5.16"
+
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libwww-perl liblwp-protocol-https-perl libjson-perl libmonitoring-plugin-perl
