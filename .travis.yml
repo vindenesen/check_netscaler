@@ -7,8 +7,3 @@ perl:
   - "5.18"
   - "5.16"
 
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libwww-perl liblwp-protocol-https-perl libjson-perl
-  - sudo /home/travis/perl5/perlbrew/bin/cpanm Monitoring::Plugin
-
