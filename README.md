@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/slauger/check_netscaler.svg?branch=master)](https://travis-ci.org/slauger/check_netscaler)
+
 # check_netscaler Nagios Plugin
 
 A Nagios Plugin written for the Citrix NetScaler Application Delivery Controller. It's based on Perl (Monitoring::Plugin) and using the the NITRO REST API. No need for SNMP.
