@@ -85,7 +85,7 @@ echo NetScaler::System::Disk
 ./check_netscaler.pl --extra-opts=${section}@${1} -C above -o system -n disk0perusage,disk1perusage -w 75 -c 80
 echo
 
-echo NetScaler::HA:
+echo NetScaler::HA
 ./check_netscaler.pl --extra-opts=${section}@${1} -C hastatus
 echo
 
