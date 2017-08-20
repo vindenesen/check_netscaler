@@ -6,7 +6,7 @@
 #
 # https://github.com/slauger/check_netscaler
 #
-# Version: v1.4.0 (2017-08-XX)
+# Version: v1.4.0 (2017-08-20)
 #
 # Copyright 2015-2017 Simon Lauger
 #
