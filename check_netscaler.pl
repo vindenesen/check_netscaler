@@ -47,8 +47,8 @@ my $plugin = Monitoring::Plugin->new(
 [ -s|--ssl ] [ -a|--api=<version> ] [ -P|--port=<port> ]
 [ -e|--endpoint=<endpoint> ] [ -w|--warning=<warning> ] [ -c|--critical=<critical> ]
 [ -v|--verbose ] [ -t|--timeout=<timeout> ] [ -x|--urlopts=<urlopts> ]',
-	license		=> 'http://www.apache.org/licenses/LICENSE-2.0',
- 	extra		=> '
+	license	=> 'http://www.apache.org/licenses/LICENSE-2.0',
+	extra	=> '
 This is a Nagios monitoring plugin for the Citrix NetScaler. The plugin works with
 the Citrix NetScaler NITRO API. The goal of this plugin is to have a single plugin
 for every important metric on the Citrix NetSaler.
@@ -478,9 +478,9 @@ sub check_sslcert
 {
 	my $plugin = shift;
 
-	if (!defined $plugin->opts->warning || !defined $plugin->opts->critical) {
-		$plugin->nagios_die($plugin->opts->command . ': command requires parameter for warning and critical');
-	}
+	# defaults for warning and critical
+	my $warning = $plugin->opts->warning || 30;
+	my $critical = $plugin->opts->critical || 10;
 
 	my %params;
 	$params{'endpoint'}   = $plugin->opts->endpoint || 'config';
@@ -492,9 +492,11 @@ sub check_sslcert
 	$response = $response->{$params{'objecttype'}};
 
 	foreach $response (@{$response}) {
-		if ($response->{daystoexpiration} <= $plugin->opts->critical) {
+		if ($response->{daystoexpiration} <= 0) {
+			$plugin->add_message(CRITICAL, $response->{certkey} . ' expired;');
+		} elsif ($response->{daystoexpiration} <= $critical) {
 			$plugin->add_message(CRITICAL, $response->{certkey} . ' expires in ' . $response->{daystoexpiration} . ' days;');
-		} elsif ($response->{daystoexpiration} <= $plugin->opts->warning) {
+		} elsif ($response->{daystoexpiration} <= $warning) {
 			$plugin->add_message(WARNING, $response->{certkey} . ' expires in ' . $response->{daystoexpiration} . ' days;');
 		}
 	}
