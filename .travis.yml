@@ -10,5 +10,5 @@ perl:
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libwww-perl liblwp-protocol-https-perl libjson-perl
-  - sudo cpanm Monitoring::Plugin
+  - sudo /home/travis/perl5/perlbrew/bin/cpanm Monitoring::Plugin
 
