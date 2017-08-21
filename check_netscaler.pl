@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 ##############################################################################
 # check_netscaler.pl
 # Nagios Plugin for Citrix NetScaler

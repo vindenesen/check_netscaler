@@ -6,7 +6,6 @@ A Nagios Plugin written for the Citrix NetScaler Application Delivery Controller
 
 Currently the plugin has the following subcommands:
 
-
 | command                | description |
 ---                      | --- | 
 **state**                | check the current service state of vservers (e.g. lb, vpn, gslb), services and service groups and servers
@@ -36,9 +35,9 @@ If you looking for a plugin to test your NetScaler Gateway vServer and Storefron
 
 ## Installation
 
-### Enterprise Linux (CentOS, RedHat)
+Run the following commands to install all Perl dependencies (Monitoring::Plugin, LWP, JSON, Time::Piece, Data::Dumper).
 
-On a Enterprise Linux machine (CentOS, RHEL) execute the following commands to install all Perl dependencies (Monitoring::Plugin, LWP, JSON, Time::Piece, Data::Dumper):
+### Enterprise Linux (CentOS, RedHat)
 
 ```
 yum install perl-libwww-perl perl-JSON perl-Monitoring-Plugin perl-Time-Piece perl-Data-Dumper
@@ -48,6 +47,12 @@ If you want to connect to your NetScaler with SSL/HTTPS you should also install 
 
 ```
 yum install perl-LWP-Protocol-https
+```
+
+### Debian and Ubuntu Linux
+
+```
+apt-get install libwww-perl liblwp-protocol-https-perl libjson-perl libmonitoring-plugin-perl
 ```
 
 ### Mac OS X
@@ -367,6 +372,12 @@ http://NSIP/nitro-rest.tgz (where NSIP is the IP address of your NetScaler appli
 ## Tested Firmware
 
 Tested with NetScaler 10.5, 11.0, 11.1 and 12.0. The plugin should work with all available firmware builds.
+
+## Automated Tests
+
+Every commit and pull request in this repository will trigger a continuous integration test with [Travis CI](https://travis-ci.org/slauger/check_netscaler). The test starts a NetScaler CPX instance (currently build 11.1-53.11) and runs `tests/travis_test.sh` against the container.
+
+Please add tests if you add new commands to this plugin. Be aware that a NetScaler CPX is very limited in it's features and not all checks of this plugin will work against a CPX instance (e.g. `hwinfo`, `ntp`, ...).
 
 ## Changelog
 
