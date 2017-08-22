@@ -352,7 +352,7 @@ sub check_state
 		$params{'endpoint'} = $plugin->opts->endpoint || 'config';
 		$field_name      = 'name';
 		$field_state     = 'svrstate';
-		$enable_perfdata = 1;
+		$enable_perfdata = 0;
 	} elsif ($plugin->opts->objecttype eq 'servicegroup') {
 		$params{'endpoint'} = $plugin->opts->endpoint || 'config';
 		$field_name      = 'servicegroupname';
