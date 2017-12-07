@@ -228,7 +228,10 @@ Multiple fields need to be seperated by a colon.
 ### Check the expiry date of a local license file
 
 The license file must be placed in `/nsconfig/license` and the filename must be given as objectname.
-Also the NITRO user needs permissions to access the filesystem directly (NITRO command systemfile).
+Also the NITRO user needs permissions to access the filesystem directly (NITRO command systemfile). This could be achieved by the following command policy.
+```
+add system cmdPolicy nagios ALLOW "(^man.*)|(^show\\s+(?!system)(?!configstatus)(?!ns ns\\.conf)(?!ns savedconfig)(?!ns runningConfig)(?!gslb runningConfig)(?!audit messages)(?!techsupport).*)|(^stat.*)|(^show\\s+(system)\\s+(file))"
+```
 
 Multiple license files can be passed, separated with a colon.
 
