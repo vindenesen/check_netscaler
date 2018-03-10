@@ -143,6 +143,13 @@ my @args = (
 		desc => 'version of the NITRO API to use (default: v1)',
 		required => 0,
 		default => 'v1',
+	},
+	{
+		spec => 'filter|f=s',
+		usage => '-f, --filter=STRING',
+		desc => 'filter out objects from the API response',
+		required => 0,
+		default => '',
 	}
 );
 
@@ -380,6 +387,10 @@ sub check_state
 
 	# loop around, check states and increment the counters
 	foreach my $response (@{$response}) {
+		if ($plugin->opts->filter ne '' && $response->{$field_name} =~ $plugin->opts->filter) {
+			next;
+		}
+
 		if (defined ($counter{$response->{$field_state}})) {
 			$counter{$response->{$field_state}}++;
 		}
