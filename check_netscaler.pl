@@ -6,9 +6,9 @@
 #
 # https://github.com/slauger/check_netscaler
 #
-# Version: v1.4.0 (2017-08-20)
+# Version: v1.5.0 (2018-03-10)
 #
-# Copyright 2015-2017 Simon Lauger
+# Copyright 2015-2018 Simon Lauger
 #
 # Contributor:
 #	bb-ricardo (github.com/bb-ricardo)
@@ -40,7 +40,7 @@ use Time::Piece;
 my $plugin = Monitoring::Plugin->new(
 	plugin		=> 'check_netscaler',
 	shortname	=> 'NetScaler',
-	version		=> 'v1.4.0',
+	version		=> 'v1.5.0',
 	url		=> 'https://github.com/slauger/check_netscaler',
 	blurb		=> 'Nagios Plugin for Citrix NetScaler Appliance (VPX/MPX/SDX/CPX)',
 	usage		=> 'Usage: %s
@@ -149,7 +149,6 @@ my @args = (
 		usage => '-f, --filter=STRING',
 		desc => 'filter out objects from the API response (regular expression syntax)',
 		required => 0,
-		default => '',
 	}
 );
 
@@ -387,7 +386,7 @@ sub check_state
 
 	# loop around, check states and increment the counters
 	foreach my $response (@{$response}) {
-		if ($plugin->opts->filter ne '' && $response->{$field_name} =~ $plugin->opts->filter) {
+		if (defined($plugin->opts->filter) && $response->{$field_name} =~ $plugin->opts->filter) {
 			next;
 		}
 
@@ -498,7 +497,7 @@ sub check_sslcert
 	$response = $response->{$params{'objecttype'}};
 
 	foreach $response (@{$response}) {
-		if ($plugin->opts->filter ne '' && $response->{certkey} =~ $plugin->opts->filter) {
+		if (defined($plugin->opts->filter) && $response->{certkey} =~ $plugin->opts->filter) {
 			next;
 		}
 
@@ -547,7 +546,7 @@ sub check_staserver
 
 	# check if any stas are in down state
 	foreach $response (@{$response}) {
-		if ($plugin->opts->filter ne '' && $response->{'staserver'} =~ $plugin->opts->filter) {
+		if (defined($plugin->opts->filter) && $response->{'staserver'} =~ $plugin->opts->filter) {
 			next;
 		}
 
@@ -722,7 +721,7 @@ sub check_interfaces
 	my $response = nitro_client($plugin, \%params);
 
 	foreach my $interface (@{$response->{'Interface'}}) {
-		if ($plugin->opts->filter ne '' && $interface->{'devicename'} =~ $plugin->opts->filter) {
+		if (defined($plugin->opts->filter) && $interface->{'devicename'} =~ $plugin->opts->filter) {
 			next;
 		}
 
