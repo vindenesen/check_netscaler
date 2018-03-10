@@ -498,6 +498,10 @@ sub check_sslcert
 	$response = $response->{$params{'objecttype'}};
 
 	foreach $response (@{$response}) {
+		if ($plugin->opts->filter ne '' && $response->{certkey} =~ $plugin->opts->filter) {
+			next;
+		}
+
 		if ($response->{daystoexpiration} <= 0) {
 			$plugin->add_message(CRITICAL, $response->{certkey} . ' expired;');
 		} elsif ($response->{daystoexpiration} <= $critical) {
@@ -543,6 +547,10 @@ sub check_staserver
 
 	# check if any stas are in down state
 	foreach $response (@{$response}) {
+		if ($plugin->opts->filter ne '' && $response->{'staserver'} =~ $plugin->opts->filter) {
+			next;
+		}
+
 		if ($response->{'staauthid'} eq '') {
 			$plugin->add_message(WARNING, $response->{'staserver'} . ' unavailable;');
 		} else {
@@ -714,6 +722,9 @@ sub check_interfaces
 	my $response = nitro_client($plugin, \%params);
 
 	foreach my $interface (@{$response->{'Interface'}}) {
+		if ($plugin->opts->filter ne '' && $interface->{'devicename'} =~ $plugin->opts->filter) {
+			next;
+		}
 
 		my $interface_state = OK;
 
