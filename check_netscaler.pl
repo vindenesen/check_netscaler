@@ -147,7 +147,7 @@ my @args = (
 	{
 		spec => 'filter|f=s',
 		usage => '-f, --filter=STRING',
-		desc => 'filter out objects from the API response',
+		desc => 'filter out objects from the API response (regular expression syntax)',
 		required => 0,
 		default => '',
 	}
