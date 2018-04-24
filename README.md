@@ -367,6 +367,7 @@ ssl=true
 - [macampo](https://github.com/macampo)
 - [Velociraptor85](https://github.com/Velociraptor85)
 - [bb-ricardo](https://github.com/bb-ricardo)
+- [DerInti](https://github.com/DerInti)
 
 ## NITRO API Documentation
 

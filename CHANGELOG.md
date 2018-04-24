@@ -1,3 +1,6 @@
+## v1.6.0 (YYYY-MM-DD)
+- better support for SDX appliances in subs matches/matches_not (#33)
+
 ## v1.5.0 (2018-03-10)
 - added automated tests against a NetScaler CPX with TravisCI
 - using /usr/bin/env instead of hardcoding the perl binary path
