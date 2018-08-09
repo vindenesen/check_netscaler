@@ -1,5 +1,9 @@
-## v1.6.0 (YYYY-MM-DD)
-- better support for SDX appliances in subs matches/matches_not (#33)
+## v1.5.1 (2018-06-10)
+- fixed minor typo, made matches/matches_not support matching in arrays
+- output for array matches more comprehensible (#33)
+- updated README.md and CHANGELOG.md (#33)
+- updated README.md (plugin successful tested with 12.1)
+- using 12.0 build 56.20 for traivs ci tests
 
 ## v1.5.0 (2018-03-10)
 - added automated tests against a NetScaler CPX with TravisCI
