@@ -54,58 +54,71 @@ function test_hastatus
 function test_system_memusagepcnt
 {
   run "./check_netscaler.pl -v -H ${CIP} -s -C above -o system -n memusagepcnt -w 75 -c 80"
+  assert_success
 }
 function test_system_cpuusagepcnt
 {
   run "./check_netscaler.pl -v -H ${CIP} -s -C above -o system -n cpuusagepcnt,mgmtcpuusagepcnt -w 75 -c 80"
+  assert_success
 }
 function test_system_diskperusage
 {
   run "./check_netscaler.pl -v -H ${CIP} -s -C above -o system -n disk0perusage,disk1perusage -w 75 -c 80"
+  assert_success
 }
 
 # test state all objects at once
 function test_state_lbvserver
 {
   run "./check_netscaler.pl -v -H ${CIP} -C state -o lbvserver"
+  assert_success
 }
 function test_state_csvserver
 {
   run "./check_netscaler.pl -v -H ${CIP} -C state -o csvserver"
+  assert_success
 }
 function test_state_service
 {
   run "./check_netscaler.pl -v -H ${CIP} -C state -o service"
+  assert_success
 }
 function test_state_servicegroup
 {
   run "./check_netscaler.pl -v -H ${CIP} -C state -o servicegroup"
+  assert_success
 }
 function test_state_server
 {
   run "./check_netscaler.pl -v -H ${CIP} -C state -o server"
+  assert_success
 }
 
 # test state of single objects
 function test_state_lbvserver_single
 {
   run "./check_netscaler.pl -v -H ${CIP} -C state -o lbvserver -n vs_lb_http_web1"
+  assert_success
 }
 function test_state_csvserver_single
 {
   run "./check_netscaler.pl -v -H ${CIP} -C state -o csvserver -n vs_cs_http_web1"
+  assert_success
 }
 function test_state_service
 {
   run "./check_netscaler.pl -v -H ${CIP} -C state -o service -n svc_http_web1"
+  assert_success
 }
 function test_state_servicegroup
 {
   run "./check_netscaler.pl -v -H ${CIP} -C state -o servicegroup -n sg_http_web1"
+  assert_success
 }
 function test_state_server
 {
   run "./check_netscaler.pl -v -H ${CIP} -C state -o server -n srv_web1"
+  assert_success
 }
 
 # start testrunner
