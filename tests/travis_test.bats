@@ -25,7 +25,8 @@
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C hastatus
   echo "status = ${status}"
   echo "output = ${output}"
-  [ ${status} -eq 0 ]
+  [ ${status} -eq 2 ]
+  [[ ${output} = *"appliance is not configured for high availability"* ]]
 }
 
 @test "check_netscaler with command system_memusagepcnt" {
@@ -53,24 +54,43 @@
   echo "status = ${status}"
   echo "output = ${output}"
   [ ${status} -eq 0 ]
+  [[ ${output} = *"vs_lb_http_web1 DOWN"* ]]
+  [[ ${output} = *"vs_lb_http_web2 DOWN"* ]]
+  [[ ${output} = *"vs_lb_http_web3 DOWN"* ]]
+  [[ ${output} = *"vs_lb_ssl_web1 DOWN"* ]]
+  [[ ${output} = *"vs_lb_ssl_web2 DOWN"* ]]
+  [[ ${output} = *"vs_lb_ssl_web3 DOWN"* ]]
 }
 @test "check_netscaler with command state_csvserver" {
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C state -o csvserver
   echo "status = ${status}"
   echo "output = ${output}"
   [ ${status} -eq 0 ]
+  [[ ${output} = *"vs_cs_ssl_web1 DOWN"* ]]
 }
 @test "check_netscaler with command state_service" {
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C state -o service
   echo "status = ${status}"
   echo "output = ${output}"
-  [ ${status} -eq 0 ]
+  [ ${status} -eq 2 ]
+  [[ ${output} = *"svc_http_web1 DOWN"* ]]
+  [[ ${output} = *"svc_http_web2 DOWN"* ]]
+  [[ ${output} = *"svc_http_web3 DOWN"* ]]
+  [[ ${output} = *"svc_ssl_web1 DOWN"* ]]
+  [[ ${output} = *"svc_ssl_web2 DOWN"* ]]
+  [[ ${output} = *"svc_ssl_web3 DOWN"* ]]
 }
 @test "check_netscaler with command state_servicegroup" {
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C state -o servicegroup
   echo "status = ${status}"
   echo "output = ${output}"
-  [ ${status} -eq 0 ]
+  [ ${status} -eq 2 ]
+  [[ ${output} = *"sg_http_web1 DOWN"* ]]
+  [[ ${output} = *"sg_http_web2 DOWN"* ]]
+  [[ ${output} = *"sg_http_web3 DOWN"* ]]
+  [[ ${output} = *"sg_ssl_web1 DOWN"* ]]
+  [[ ${output} = *"sg_ssl_web2 DOWN"* ]]
+  [[ ${output} = *"sg_ssl_web3 DOWN"* ]]
 }
 @test "check_netscaler with command state_server" {
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C state -o server
@@ -84,25 +104,29 @@
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C state -o lbvserver -n vs_lb_http_web1
   echo "status = ${status}"
   echo "output = ${output}"
-  [ ${status} -eq 0 ]
+  [ ${status} -eq 2 ]
+  [[ ${output} = *"vs_lb_http_web1 DOWN"* ]]
 }
 @test "check_netscaler with command state_csvserver and single object" {
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C state -o csvserver -n vs_cs_http_web1
   echo "status = ${status}"
   echo "output = ${output}"
-  [ ${status} -eq 0 ]
+  [ ${status} -eq 2 ]
+  [[ ${output} = *"vs_cs_http_web1 DOWN"* ]]
 }
 @test "check_netscaler with command state_service and single object" {
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C state -o service -n svc_http_web1
   echo "status = ${status}"
   echo "output = ${output}"
-  [ ${status} -eq 0 ]
+  [ ${status} -eq 2 ]
+  [[ ${output} = *"svc_http_web1 DOWN"* ]]
 }
 @test "check_netscaler with command state_servicegroup and single object" {
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C state -o servicegroup -n sg_http_web1
   echo "status = ${status}"
   echo "output = ${output}"
-  [ ${status} -eq 0 ]
+  [ ${status} -eq 2 ]
+  [[ ${output} = *"sg_http_web1 DOWN"* ]]
 }
 @test "check_netscaler with command state_server and single object" {
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C state -o server -n srv_web1
