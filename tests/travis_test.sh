@@ -5,11 +5,11 @@
 function deploy_nsconfig
 {
   # auto accept ssh host key
-  sshpass -p nsroot ssh -o StrictHostKeyChecking=no nsroot@${CIP} hostname
+  sshpass -p nsroot ssh -o StrictHostKeyChecking=no nsroot@${NETSCALER_IP} hostname
 
   # configure netscaler cpx
-  sshpass -p nsroot scp tests/ns.conf nsroot@${CIP}:/home/nsroot/ns.conf
-  sshpass -p nsroot ssh nsroot@${CIP} "/var/netscaler/bins/cli_script.sh /home/nsroot/ns.conf"
+  sshpass -p nsroot scp tests/ns.conf nsroot@${NETSCALER_IP}:/home/nsroot/ns.conf
+  sshpass -p nsroot ssh nsroot@${NETSCALER_IP} "/var/netscaler/bins/cli_script.sh /home/nsroot/ns.conf"
 }
 
 deploy_nsconfig
