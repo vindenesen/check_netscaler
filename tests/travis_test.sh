@@ -5,15 +5,12 @@
 # source bash testing framework
 source tests/bash_test_tools
 
-# enable debugging
-set -x
-
 # get ipaddress from container id
 CID=$(docker ps | grep netscalercpx | awk '{print $1}')
 CIP=$(docker inspect ${CID} | grep IPAddress | cut -d '"' -f 4 | tail -n1)
 
 # setup unit tests
-function setup
+function configure
 {
   # auto accept ssh host key
   sshpass -p nsroot ssh -o StrictHostKeyChecking=no nsroot@${CIP} hostname
@@ -21,6 +18,11 @@ function setup
   # configure netscaler cpx
   sshpass -p nsroot scp tests/ns.conf nsroot@${CIP}:/home/nsroot/ns.conf
   sshpass -p nsroot ssh nsroot@${CIP} "/var/netscaler/bins/cli_script.sh /home/nsroot/ns.conf"
+}
+
+function setup
+{
+  return
 }
 
 # teardown unit tests
@@ -123,6 +125,9 @@ function test_state_server
   run "./check_netscaler.pl -v -H ${CIP} -C state -o server -n srv_web1"
   assert_success
 }
+
+# configure netscaler
+configure
 
 # start testrunner
 testrunner
