@@ -13,6 +13,6 @@ install:
   - git clone https://github.com/bats-core/bats-core.git ~/bats-core
 
 script:
-  - export CID=$(docker ps | grep netscalercpx | awk '{print $1}')
-  - export CIP=$(docker inspect ${CID} | grep IPAddress | cut -d '"' -f 4 | tail -n1)
+  - export CONTAINER_ID=$(docker ps | grep netscalercpx | awk '{print $1}')
+  - export NETSCALER_IP=$(docker inspect ${CID} | grep IPAddress | cut -d '"' -f 4 | tail -n1)
   - ~/bats-core/bin/bats tests/travis_test.bats
