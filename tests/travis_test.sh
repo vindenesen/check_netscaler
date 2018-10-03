@@ -1,133 +1,95 @@
-#!/bin/bash
-# Travis CI Test Script for check_netscaler.pl
+#!/usr/bin/env bats
+# Travis CI Test for check_netscaler.pl
 # https://github.com/slauger/check_netscaler
 
-# source bash testing framework
-source tests/bash_test_tools
-
-# get ipaddress from container id
-CID=$(docker ps | grep netscalercpx | awk '{print $1}')
-CIP=$(docker inspect ${CID} | grep IPAddress | cut -d '"' -f 4 | tail -n1)
-
-# setup unit tests
-function configure
-{
-  # auto accept ssh host key
-  sshpass -p nsroot ssh -o StrictHostKeyChecking=no nsroot@${CIP} hostname
-
-  # configure netscaler cpx
-  sshpass -p nsroot scp tests/ns.conf nsroot@${CIP}:/home/nsroot/ns.conf
-  sshpass -p nsroot ssh nsroot@${CIP} "/var/netscaler/bins/cli_script.sh /home/nsroot/ns.conf"
-}
-
-function setup
-{
-  return
-}
-
-# teardown unit tests
-function teardown
-{
-  return
-}
-
 # do some basic plugin tests
-function test_sslcert
+@test "check_netscaler with command sslcert"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -C sslcert"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -C sslcert)
+  [ ${result} -eq 0 ]
 }
-function test_interfaces
+@test "check_netscaler with command interfaces"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -C interfaces"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -C interfaces)
+  [ ${result} -eq 0 ]
 }
-function test_nsconfig
+@test "check_netscaler with command nsconfig"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -C nsconfig"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -C nsconfig)
+  [ ${result} -eq 0 ]
 }
-function test_hastatus
+@test "check_netscaler with command hastatus"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -C hastatus"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -C hastatus)
+  [ ${result} -eq 0 ]
 }
 
-# fails on vpx instances
-#run "./check_netscaler.pl -v -H ${CIP} -C hwinfo
-
-function test_system_memusagepcnt
+@test "check_netscaler with command system_memusagepcnt"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -s -C above -o system -n memusagepcnt -w 75 -c 80"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -s -C above -o system -n memusagepcnt -w 75 -c 80)
+  [ ${result} -eq 0 ]
 }
-function test_system_cpuusagepcnt
+@test "check_netscaler with command system_cpuusagepcnt"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -s -C above -o system -n cpuusagepcnt,mgmtcpuusagepcnt -w 75 -c 80"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -s -C above -o system -n cpuusagepcnt,mgmtcpuusagepcnt -w 75 -c 80)
+  [ ${result} -eq 0 ]
 }
-function test_system_diskperusage
+@test "check_netscaler with command system_diskperusage"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -s -C above -o system -n disk0perusage,disk1perusage -w 75 -c 80"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -s -C above -o system -n disk0perusage,disk1perusage -w 75 -c 80)
+  [ ${result} -eq 0 ]
 }
 
 # test state all objects at once
-function test_state_lbvserver
+@test "check_netscaler with command state_lbvserver"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -C state -o lbvserver"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -C state -o lbvserver)
+  [ ${result} -eq 0 ]
 }
-function test_state_csvserver
+@test "check_netscaler with command state_csvserver"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -C state -o csvserver"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -C state -o csvserver)
+  [ ${result} -eq 0 ]
 }
-function test_state_service
+@test "check_netscaler with command state_service"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -C state -o service"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -C state -o service)
+  [ ${result} -eq 0 ]
 }
-function test_state_servicegroup
+@test "check_netscaler with command state_servicegroup"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -C state -o servicegroup"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -C state -o servicegroup)
+  [ ${result} -eq 0 ]
 }
-function test_state_server
+@test "check_netscaler with command state_server"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -C state -o server"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -C state -o server)
+  [ ${result} -eq 0 ]
 }
 
 # test state of single objects
-function test_state_lbvserver_single
+@test "check_netscaler with command state_lbvserver_single"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -C state -o lbvserver -n vs_lb_http_web1"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -C state -o lbvserver -n vs_lb_http_web1)
+  [ ${result} -eq 0 ]
 }
-function test_state_csvserver_single
+@test "check_netscaler with command state_csvserver_single"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -C state -o csvserver -n vs_cs_http_web1"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -C state -o csvserver -n vs_cs_http_web1)
+  [ ${result} -eq 0 ]
 }
-function test_state_service
+@test "check_netscaler with command state_service"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -C state -o service -n svc_http_web1"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -C state -o service -n svc_http_web1)
+  [ ${result} -eq 0 ]
 }
-function test_state_servicegroup
+@test "check_netscaler with command state_servicegroup"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -C state -o servicegroup -n sg_http_web1"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -C state -o servicegroup -n sg_http_web1)
+  [ ${result} -eq 0 ]
 }
-function test_state_server
+@test "check_netscaler with command state_server"
 {
-  run "./check_netscaler.pl -v -H ${CIP} -C state -o server -n srv_web1"
-  assert_success
+  result=$(./check_netscaler.pl -v -H ${CIP} -C state -o server -n srv_web1)
+  [ ${result} -eq 0 ]
 }
-
-# configure netscaler
-configure
-
-# start testrunner
-testrunner

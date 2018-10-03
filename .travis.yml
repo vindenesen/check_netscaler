@@ -8,7 +8,10 @@ before_install:
   - docker run -e EULA=yes -dt -p 22 -p 80 -p 161/udp --ulimit core=-1 --cap-add=NET_ADMIN store/citrix/netscalercpx:12.0-56.20
 
 install:
-  - sudo apt-get install -y sshpass cpanminus libwww-perl liblwp-protocol-https-perl libjson-perl strace
+  - sudo apt-get install -y sshpass cpanminus libwww-perl liblwp-protocol-https-perl libjson-perl strace bats
   - sudo cpanm Monitoring::Plugin
 
-script: tests/travis_test.sh
+script:
+  - export CID=$(docker ps | grep netscalercpx | awk '{print $1}')
+  - export CIP=$(docker inspect ${CID} | grep IPAddress | cut -d '"' -f 4 | tail -n1)
+  - tests/travis_test.sh
