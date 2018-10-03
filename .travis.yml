@@ -14,5 +14,5 @@ install:
 
 script:
   - export CONTAINER_ID=$(docker ps | grep netscalercpx | awk '{print $1}')
-  - export NETSCALER_IP=$(docker inspect ${CID} | grep IPAddress | cut -d '"' -f 4 | tail -n1)
+  - export NETSCALER_IP=$(docker inspect ${CONTAINER_ID} | grep IPAddress | cut -d '"' -f 4 | tail -n1)
   - ~/bats-core/bin/bats tests/travis_test.bats
