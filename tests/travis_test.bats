@@ -8,71 +8,71 @@
   [ ${status} -eq 0 ]
 }
 @test "check_netscaler with command interfaces" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -C interfaces)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -C interfaces
   [ ${status} -eq 0 ]
 }
 @test "check_netscaler with command nsconfig" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -C nsconfig)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -C nsconfig
   [ ${status} -eq 0 ]
 }
 @test "check_netscaler with command hastatus" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -C hastatus)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -C hastatus
   [ ${status} -eq 0 ]
 }
 
 @test "check_netscaler with command system_memusagepcnt" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -s -C above -o system -n memusagepcnt -w 75 -c 80)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -s -C above -o system -n memusagepcnt -w 75 -c 80
   [ ${status} -eq 0 ]
 }
 @test "check_netscaler with command system_cpuusagepcnt" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -s -C above -o system -n cpuusagepcnt,mgmtcpuusagepcnt -w 75 -c 80)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -s -C above -o system -n cpuusagepcnt,mgmtcpuusagepcnt -w 75 -c 80
   [ ${status} -eq 0 ]
 }
 @test "check_netscaler with command system_diskperusage" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -s -C above -o system -n disk0perusage,disk1perusage -w 75 -c 80)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -s -C above -o system -n disk0perusage,disk1perusage -w 75 -c 80
   [ ${status} -eq 0 ]
 }
 
 # test state all objects at once
 @test "check_netscaler with command state_lbvserver" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o lbvserver)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o lbvserver
   [ ${status} -eq 0 ]
 }
 @test "check_netscaler with command state_csvserver" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o csvserver)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o csvserver
   [ ${status} -eq 0 ]
 }
 @test "check_netscaler with command state_service" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o service)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o service
   [ ${status} -eq 0 ]
 }
 @test "check_netscaler with command state_servicegroup" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o servicegroup)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o servicegroup
   [ ${status} -eq 0 ]
 }
 @test "check_netscaler with command state_server" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o server)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o server
   [ ${status} -eq 0 ]
 }
 
 # test state of single objects
 @test "check_netscaler with command state_lbvserver and single object" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o lbvserver -n vs_lb_http_web1)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o lbvserver -n vs_lb_http_web1
   [ ${status} -eq 0 ]
 }
 @test "check_netscaler with command state_csvserver and single object" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o csvserver -n vs_cs_http_web1)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o csvserver -n vs_cs_http_web1
   [ ${status} -eq 0 ]
 }
 @test "check_netscaler with command state_service and single object" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o service -n svc_http_web1)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o service -n svc_http_web1
   [ ${status} -eq 0 ]
 }
 @test "check_netscaler with command state_servicegroup and single object" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o servicegroup -n sg_http_web1)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o servicegroup -n sg_http_web1
   [ ${status} -eq 0 ]
 }
 @test "check_netscaler with command state_server and single object" {
-  status=$(./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o server -n srv_web1)
+  run ./check_netscaler.pl -v -H ${NETSCALER_IP} -C state -o server -n srv_web1
   [ ${status} -eq 0 ]
 }
