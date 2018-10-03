@@ -114,7 +114,7 @@
   echo "status = ${status}"
   echo "output = ${output}"
   [ ${status} -eq 0 ]
-  [[ ${output} = *"vs_cs_http_web1 DOWN"* ]]
+  [[ ${output} = *"vs_cs_http_web1 UP"* ]]
 }
 @test "check_netscaler with command state_service and single object" {
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C state -o service -n svc_http_web1
