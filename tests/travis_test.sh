@@ -5,6 +5,9 @@
 # source bash testing framework
 source tests/bash_test_tools
 
+# enable debugging
+set -x
+
 # get ipaddress from container id
 CID=$(docker ps | grep netscalercpx | awk '{print $1}')
 CIP=$(docker inspect ${CID} | grep IPAddress | cut -d '"' -f 4 | tail -n1)
