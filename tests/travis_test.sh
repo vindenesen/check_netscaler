@@ -23,6 +23,7 @@ function setup
 # teardown unit tests
 function teardown
 {
+  return
 }
 
 # do some basic plugin tests
