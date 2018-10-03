@@ -53,7 +53,7 @@
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C state -o lbvserver
   echo "status = ${status}"
   echo "output = ${output}"
-  [ ${status} -eq 0 ]
+  [ ${status} -eq 2 ]
   [[ ${output} = *"vs_lb_http_web1 DOWN"* ]]
   [[ ${output} = *"vs_lb_http_web2 DOWN"* ]]
   [[ ${output} = *"vs_lb_http_web3 DOWN"* ]]
@@ -65,8 +65,10 @@
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C state -o csvserver
   echo "status = ${status}"
   echo "output = ${output}"
-  [ ${status} -eq 0 ]
+  [ ${status} -eq 2 ]
   [[ ${output} = *"vs_cs_ssl_web1 DOWN"* ]]
+  [[ ${output} = *"vs_cs_ssl_web2 DOWN"* ]]
+  [[ ${output} = *"vs_cs_ssl_web3 DOWN"* ]]
 }
 @test "check_netscaler with command state_service" {
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C state -o service
@@ -111,7 +113,7 @@
   run ./check_netscaler.pl -H ${NETSCALER_IP} -C state -o csvserver -n vs_cs_http_web1
   echo "status = ${status}"
   echo "output = ${output}"
-  [ ${status} -eq 2 ]
+  [ ${status} -eq 0 ]
   [[ ${output} = *"vs_cs_http_web1 DOWN"* ]]
 }
 @test "check_netscaler with command state_service and single object" {
