@@ -100,3 +100,6 @@ function test_state_server
 {
   ./check_netscaler.pl -v -H ${CIP} -C state -o server -n srv_web1
 }
+
+# start testrunner
+testrunner
