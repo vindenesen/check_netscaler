@@ -86,7 +86,7 @@ function teardown
 function get_current_line
 {
   #IFS=';' read -sdR -p $'\E[6n' ROW COL;echo "${ROW#*[}"
-  echo 0
+  echo 2
 }
 
 function move_cursor_right
