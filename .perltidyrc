@@ -5,5 +5,4 @@
 -ci=2    # Continuation indentation is 2 columns
 -vt=0    # Less vertical tightness
 -wn      # Weld nested containers
--isbc    # Don't indent comments without leading space
 -l=200   # 200 characters per line
