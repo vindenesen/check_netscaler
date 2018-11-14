@@ -360,6 +360,19 @@ password=password
 ssl=true
 ```
 
+## Build static binary
+
+If you do not want to install all dependencies on your machine you can build a static standalone binary of this plugin via the Perl Archive Toolkit (PAR). A Makefile for doing so is provided in the projects root folder.
+
+```
+yum install -y epel-release
+yum install -y perl-libwww-perl perl-JSON perl-Monitoring-Plugin perl-Time-Piece perl-Data-Dumper perl-LWP-Protocol-https
+yum install -y perl-PAR perl-PAR-Dist perl-PAR-Packer make
+make
+```
+
+Using the plugin via PAR is not yet widely tested in production setups. Feedback is appreciated.
+
 ## Authors
 - [slauger](https://github.com/slauger)
 
