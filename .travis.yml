@@ -16,6 +16,6 @@ install:
   - git clone https://github.com/bats-core/bats-core.git ~/bats-core
 
 script:
-  - export NETSCALER_IP=$(docker netscalercpx unifi | jq -r .[0].NetworkSettings.IPAddress)
+  - export NETSCALER_IP=$(docker inspect netscalercpx | jq -r .[0].NetworkSettings.IPAddress)
   - tests/travis_prepare.sh
   - ~/bats-core/bin/bats --pretty tests/travis_test.bats
