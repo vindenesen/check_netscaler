@@ -8,15 +8,14 @@ services:
 before_install:
   - sudo apt-get -qq update
   - docker pull store/citrix/netscalercpx:${CONTAINER_VERSION}
-  - docker run -e EULA=yes -dt -p 22 -p 80 -p 161/udp --ulimit core=-1 --cap-add=NET_ADMIN store/citrix/netscalercpx:${CONTAINER_VERSION}
+  - docker run -e EULA=yes -dt -p 22 -p 80 -p 161/udp --ulimit core=-1 --cap-add=NET_ADMIN --name netscalercpx store/citrix/netscalercpx:${CONTAINER_VERSION}
 
 install:
-  - sudo apt-get install -y sshpass cpanminus libwww-perl liblwp-protocol-https-perl libjson-perl strace
+  - sudo apt-get install -y sshpass jq cpanminus libwww-perl liblwp-protocol-https-perl libjson-perl strace
   - sudo cpanm Monitoring::Plugin
   - git clone https://github.com/bats-core/bats-core.git ~/bats-core
 
 script:
-  - export CONTAINER_ID=$(docker ps | grep netscalercpx | awk '{print $1}')
-  - export NETSCALER_IP=$(docker inspect ${CONTAINER_ID} | grep IPAddress | cut -d '"' -f 4 | tail -n1)
-  - tests/travis_test.sh
+  - export NETSCALER_IP=$(docker netscalercpx unifi | jq -r .[0].NetworkSettings.IPAddress)
+  - tests/travis_prepare.sh
   - ~/bats-core/bin/bats --pretty tests/travis_test.bats
