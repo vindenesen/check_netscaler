@@ -163,87 +163,73 @@ if ( $plugin->opts->command eq 'state' ) {
 
   # check for up/down state of vservers, service, servicegroup
   check_state($plugin);
-}
-elsif ( $plugin->opts->command eq 'above' ) {
+} elsif ( $plugin->opts->command eq 'above' ) {
 
   # check if a response is above a threshold
   check_threshold_and_get_perfdata( $plugin, $plugin->opts->command );
-}
-elsif ( $plugin->opts->command eq 'below' ) {
+} elsif ( $plugin->opts->command eq 'below' ) {
 
   # check if a response is below  a threshold
   check_threshold_and_get_perfdata( $plugin, $plugin->opts->command );
-
-  # be backwards compatible; also accept command 'string'
 }
+
+# be backwards compatible; also accept command 'string'
 elsif ( $plugin->opts->command eq 'matches' || $plugin->opts->command eq 'string' ) {
 
   # check if a response does contains a specific string
   check_keyword( $plugin, 'matches' );
-
-  # be backwards compatible; also accept command 'string_not'
 }
+
+# be backwards compatible; also accept command 'string_not'
 elsif ( $plugin->opts->command eq 'matches_not' || $plugin->opts->command eq 'string_not' ) {
 
   # check if a response does not contains a specific string
   check_keyword( $plugin, 'matches not' );
-}
-elsif ( $plugin->opts->command eq 'sslcert' ) {
+} elsif ( $plugin->opts->command eq 'sslcert' ) {
 
   # check for the lifetime of installed certificates
   check_sslcert($plugin);
-}
-elsif ( $plugin->opts->command eq 'nsconfig' ) {
+} elsif ( $plugin->opts->command eq 'nsconfig' ) {
 
   # check for unsaved configuration changes
   check_nsconfig($plugin);
-}
-elsif ( $plugin->opts->command eq 'staserver' ) {
+} elsif ( $plugin->opts->command eq 'staserver' ) {
 
   # check the state of the staservers
   check_staserver($plugin);
-}
-elsif ( $plugin->opts->command eq 'hwinfo' ) {
+} elsif ( $plugin->opts->command eq 'hwinfo' ) {
 
   # print infos about hardware and build version
   get_hardware_info($plugin);
-}
-elsif ( $plugin->opts->command eq 'perfdata' ) {
+} elsif ( $plugin->opts->command eq 'perfdata' ) {
 
   # print performance data of protocol stats
   check_threshold_and_get_perfdata( $plugin, 'above' );
-}
-elsif ( $plugin->opts->command eq 'interfaces' ) {
+} elsif ( $plugin->opts->command eq 'interfaces' ) {
 
   # check the state of all interfaces
   check_interfaces($plugin);
-}
-elsif ( $plugin->opts->command eq 'servicegroup' ) {
+} elsif ( $plugin->opts->command eq 'servicegroup' ) {
 
   # check the state of a servicegroup and its members
   check_servicegroup($plugin);
-}
-elsif ( $plugin->opts->command eq 'license' ) {
+} elsif ( $plugin->opts->command eq 'license' ) {
 
   # check a installed license file
   check_license($plugin);
-}
-elsif ( $plugin->opts->command eq 'hastatus' ) {
+} elsif ( $plugin->opts->command eq 'hastatus' ) {
 
   # check the HA status of a node
   check_hastatus($plugin);
-}
-elsif ( $plugin->opts->command eq 'ntp' ) {
+} elsif ( $plugin->opts->command eq 'ntp' ) {
 
   # check NTP status
   check_ntp($plugin);
-}
-elsif ( $plugin->opts->command eq 'debug' ) {
+} elsif ( $plugin->opts->command eq 'debug' ) {
 
   # dump the full response of the nitro api
   check_debug($plugin);
-}
-else {
+} else {
 
   # error, unkown command given
   $plugin->nagios_die( 'unkown command ' . $plugin->opts->command . ' given' );
@@ -263,8 +249,7 @@ sub add_arg {
 
     if ( ref( $arg->{'desc'} ) ) {
       @desc = @{ $arg->{'desc'} };
-    }
-    else {
+    } else {
       @desc = ( $arg->{'desc'} );
     }
 
@@ -337,8 +322,7 @@ sub nitro_client {
 
   if ( HTTP::Status::is_error( $response->code ) ) {
     $plugin->nagios_die( $response->content );
-  }
-  else {
+  } else {
     $response = JSON->new->allow_blessed->convert_blessed->decode( $response->content );
   }
 
@@ -358,8 +342,7 @@ sub check_state {
   if ( $plugin->opts->objecttype eq 'server' ) {
     $counter{'ENABLED'}  = 0;
     $counter{'DISABLED'} = 0;
-  }
-  else {
+  } else {
     $counter{'UP'}             = 0;
     $counter{'DOWN'}           = 0;
     $counter{'OUT OF SERVICE'} = 0;
@@ -396,20 +379,17 @@ sub check_state {
     $field_name         = 'name';
     $field_state        = 'svrstate';
     $enable_perfdata    = 0;
-  }
-  elsif ( $plugin->opts->objecttype eq 'servicegroup' ) {
+  } elsif ( $plugin->opts->objecttype eq 'servicegroup' ) {
     $params{'endpoint'} = $plugin->opts->endpoint || 'config';
     $field_name         = 'servicegroupname';
     $field_state        = 'servicegroupeffectivestate';
     $enable_perfdata    = 0;
-  }
-  elsif ( $plugin->opts->objecttype eq 'server' ) {
+  } elsif ( $plugin->opts->objecttype eq 'server' ) {
     $params{'endpoint'} = $plugin->opts->endpoint || 'config';
     $field_name         = 'name';
     $field_state        = 'state';
     $enable_perfdata    = 0;
-  }
-  else {
+  } else {
     $params{'endpoint'} = $plugin->opts->endpoint || 'stat';
   }
 
@@ -435,11 +415,9 @@ sub check_state {
     }
     if ( $response->{$field_state} eq 'UP' || $response->{$field_state} eq 'ENABLED' ) {
       $plugin->add_message( OK, $response->{$field_name} . ' ' . $response->{$field_state} . ';' );
-    }
-    elsif ( $response->{$field_state} eq 'PARTIAL-UP' || $response->{$field_state} eq 'DISABLED' ) {
+    } elsif ( $response->{$field_state} eq 'PARTIAL-UP' || $response->{$field_state} eq 'DISABLED' ) {
       $plugin->add_message( WARNING, $response->{$field_name} . ' ' . $response->{$field_state} . ';' );
-    }
-    else {
+    } else {
       $plugin->add_message( CRITICAL, $response->{$field_name} . ' ' . $response->{$field_state} . ';' );
     }
 
@@ -532,8 +510,7 @@ sub check_keyword {
               . ' keyword "'
               . $plugin->opts->critical
               . '";' );
-        }
-        elsif ( ( $type_of_string_comparison eq 'matches' && $response->{$objectname_name} eq $plugin->opts->warning )
+        } elsif ( ( $type_of_string_comparison eq 'matches' && $response->{$objectname_name} eq $plugin->opts->warning )
           || ( $type_of_string_comparison eq 'matches not' && $response->{$objectname_name} ne $plugin->opts->warning ) )
         {
           $plugin->add_message( WARNING,
@@ -545,29 +522,25 @@ sub check_keyword {
               . ' keyword "'
               . $plugin->opts->warning
               . '";' );
-        }
-        else {
+        } else {
           $plugin->add_message( OK, $plugin->opts->objecttype . '.' . $response->{$objectname_id} . '.' . $objectname_name . ': ' . $response->{$objectname_name} . ';' );
         }
       }
     }
-  }
-  elsif ( ref $response eq 'HASH' ) {
+  } elsif ( ref $response eq 'HASH' ) {
     foreach ( split( ',', $plugin->opts->objectname ) ) {
       if ( ( $type_of_string_comparison eq 'matches' && $response->{$_} eq $plugin->opts->critical ) || ( $type_of_string_comparison eq 'matches not' && $response->{$_} ne $plugin->opts->critical ) )
       {
         $plugin->add_message( CRITICAL, $plugin->opts->objecttype . '.' . $_ . ': "' . $response->{$_} . '" ' . $type_of_string_comparison . ' keyword "' . $plugin->opts->critical . '";' );
-      }
-      elsif ( ( $type_of_string_comparison eq 'matches' && $response->{$_} eq $plugin->opts->warning ) || ( $type_of_string_comparison eq 'matches not' && $response->{$_} ne $plugin->opts->warning ) )
+      } elsif ( ( $type_of_string_comparison eq 'matches' && $response->{$_} eq $plugin->opts->warning )
+        || ( $type_of_string_comparison eq 'matches not' && $response->{$_} ne $plugin->opts->warning ) )
       {
         $plugin->add_message( WARNING, $plugin->opts->objecttype . '.' . $_ . ': "' . $response->{$_} . '" ' . $type_of_string_comparison . ' keyword "' . $plugin->opts->warning . '";' );
-      }
-      else {
+      } else {
         $plugin->add_message( OK, $plugin->opts->objecttype . '.' . $_ . ': ' . $response->{$_} . ';' );
       }
     }
-  }
-  else {
+  } else {
     $plugin->nagios_die( $plugin->opts->command . ': unable to parse data. Returned data is not a HASH or ARRAY!' );
   }
 
@@ -598,11 +571,9 @@ sub check_sslcert {
 
     if ( $response->{daystoexpiration} <= 0 ) {
       $plugin->add_message( CRITICAL, $response->{certkey} . ' expired;' );
-    }
-    elsif ( $response->{daystoexpiration} <= $critical ) {
+    } elsif ( $response->{daystoexpiration} <= $critical ) {
       $plugin->add_message( CRITICAL, $response->{certkey} . ' expires in ' . $response->{daystoexpiration} . ' days;' );
-    }
-    elsif ( $response->{daystoexpiration} <= $warning ) {
+    } elsif ( $response->{daystoexpiration} <= $warning ) {
       $plugin->add_message( WARNING, $response->{certkey} . ' expires in ' . $response->{daystoexpiration} . ' days;' );
     }
   }
@@ -611,8 +582,7 @@ sub check_sslcert {
 
   if ( $code == OK ) {
     $plugin->nagios_exit( $code, $plugin->opts->command . ': certificate lifetime OK' );
-  }
-  else {
+  } else {
     $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
   }
 }
@@ -627,8 +597,7 @@ sub check_staserver {
 
   if ( $params{'objectname'} eq '' ) {
     $params{'objecttype'} = $plugin->opts->objecttype || 'vpnglobal_staserver_binding';
-  }
-  else {
+  } else {
     $params{'objecttype'} = $plugin->opts->objecttype || 'vpnvserver_staserver_binding';
   }
 
@@ -650,8 +619,7 @@ sub check_staserver {
 
     if ( $response->{'staauthid'} eq '' ) {
       $plugin->add_message( WARNING, $response->{'staserver'} . ' unavailable;' );
-    }
-    else {
+    } else {
       $plugin->add_message( OK, $response->{'staserver'} . ' OK (' . $response->{'staauthid'} . ');' );
       $critical = 0;
     }
@@ -678,8 +646,7 @@ sub check_nsconfig {
 
   if ( !defined $response->{'configchanged'} || $response->{'configchanged'} ) {
     $plugin->nagios_exit( WARNING, $plugin->opts->command . ': unsaved configuration changes' );
-  }
-  else {
+  } else {
     $plugin->nagios_exit( OK, $plugin->opts->command . ': no unsaved configuration changes' );
   }
 }
@@ -767,8 +734,7 @@ sub check_threshold_and_get_perfdata {
               . ', critical: '
               . $plugin->opts->critical
               . ')' );
-        }
-        elsif ( defined $plugin->opts->warning && ( $direction eq 'above' && $response->{$objectname_name} >= $plugin->opts->warning )
+        } elsif ( defined $plugin->opts->warning && ( $direction eq 'above' && $response->{$objectname_name} >= $plugin->opts->warning )
           || ( $direction eq 'below' && $response->{$objectname_name} <= $plugin->opts->warning ) )
         {
           $plugin->add_message( WARNING,
@@ -781,8 +747,7 @@ sub check_threshold_and_get_perfdata {
               . ', warning: '
               . $plugin->opts->warning
               . ')' );
-        }
-        else {
+        } else {
           $plugin->add_message( OK, $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . ': ' . $response->{$objectname_name} );
         }
 
@@ -796,8 +761,7 @@ sub check_threshold_and_get_perfdata {
         );
       }
     }
-  }
-  elsif ( ref $response eq 'HASH' ) {
+  } elsif ( ref $response eq 'HASH' ) {
     foreach my $objectname ( split( ',', $plugin->opts->objectname ) ) {
       if ( not defined( $response->{$objectname} ) ) {
         $plugin->nagios_die( $plugin->opts->command . ': object name "' . $objectname . '" not found in output.' );
@@ -809,14 +773,12 @@ sub check_threshold_and_get_perfdata {
       {
         $plugin->add_message( CRITICAL,
           $params{'objecttype'} . '.' . $objectname . ' is ' . $direction . ' threshold (current: ' . $response->{$objectname} . ', critical: ' . $plugin->opts->critical . ')' );
-      }
-      elsif ( defined $plugin->opts->warning && ( $direction eq 'above' && $response->{$objectname} >= $plugin->opts->warning )
+      } elsif ( defined $plugin->opts->warning && ( $direction eq 'above' && $response->{$objectname} >= $plugin->opts->warning )
         || ( $direction eq 'below' && $response->{$objectname} <= $plugin->opts->warning ) )
       {
         $plugin->add_message( WARNING,
           $params{'objecttype'} . '.' . $objectname . ' is ' . $direction . ' threshold (current: ' . $response->{$objectname} . ', warning: ' . $plugin->opts->warning . ')' );
-      }
-      else {
+      } else {
         $plugin->add_message( OK, $params{'objecttype'} . '.' . $objectname . ': ' . $response->{$objectname} );
       }
 
@@ -829,8 +791,7 @@ sub check_threshold_and_get_perfdata {
         critical => $plugin->opts->critical,
       );
     }
-  }
-  else {
+  } else {
     $plugin->nagios_die( $plugin->opts->command . ': unable to parse data. Returned data is not a HASH or ARRAY!' );
   }
 
@@ -997,8 +958,7 @@ sub check_servicegroup {
   foreach my $member_state_key ( keys %member_state ) {
     if ( $member_state{$member_state_key} eq 'DOWN' ) {
       $members_down++;
-    }
-    else {
+    } else {
       $members_up++;
     }
   }
@@ -1008,8 +968,7 @@ sub check_servicegroup {
 
   if ( $member_quorum <= $member_quorum_critical ) {
     $servicegroup_state = CRITICAL;
-  }
-  elsif ( $member_quorum <= $member_quorum_warning ) {
+  } elsif ( $member_quorum <= $member_quorum_warning ) {
     $servicegroup_state = WARNING;
   }
 
@@ -1067,15 +1026,12 @@ sub check_license {
 
           if ( $timepiece->epoch - time < ( 60 * 60 * 24 * $plugin->opts->critical ) ) {
             $plugin->add_message( CRITICAL, $stripped[1] . ' expires on ' . $stripped[4] . ';' );
-          }
-          elsif ( $timepiece->epoch - time < ( 60 * 60 * 24 * $plugin->opts->warning ) ) {
+          } elsif ( $timepiece->epoch - time < ( 60 * 60 * 24 * $plugin->opts->warning ) ) {
             $plugin->add_message( WARNING, $stripped[1] . ' expires on ' . $stripped[4] . ';' );
-          }
-          else {
+          } else {
             $plugin->add_message( OK, $stripped[1] . ' expires on ' . $stripped[4] . ';' );
           }
-        }
-        else {
+        } else {
           $plugin->add_message( OK, $stripped[1] . ' never expires;' );
         }
       }
@@ -1127,8 +1083,7 @@ sub check_hastatus {
     $index = uc( $response->{$_} );
     if ( defined( $hastatus{$index} ) ) {
       $plugin->add_message( $hastatus{$index}, $_ . ' ' . $response->{$_} . ';' );
-    }
-    else {
+    } else {
       $plugin->add_message( CRITICAL, $_ . ' ' . $response->{$_} . ';' );
     }
   }
@@ -1148,11 +1103,9 @@ sub check_hastatus {
   foreach ( 'hatotpktrx', 'hatotpkttx', 'hapktrxrate', 'hapkttxrate' ) {
     if ( $_ eq 'hatotpktrx' || $_ eq 'hatotpkttx' ) {
       $measurement = 'c';
-    }
-    elsif ( $_ eq 'hapktrxrate' || $_ eq 'hapkttxrate' ) {
+    } elsif ( $_ eq 'hapktrxrate' || $_ eq 'hapkttxrate' ) {
       $measurement = 'a';
-    }
-    else {
+    } else {
       $measurement = undef;
     }
 
@@ -1254,8 +1207,7 @@ sub check_ntp {
         . $ntp_info{'synced_stratum'}
         . ', truechimers='
         . $ntp_info{'truechimers'} );
-  }
-  else {
+  } else {
 
     # get values for WARNING and CRITICAL
     foreach ( split( /,/, $plugin->opts->warning ) ) {
@@ -1286,8 +1238,7 @@ sub check_ntp {
     {
       $ntp_check_status = CRITICAL;
       $output_text .= ' (CRITCAL)';
-    }
-    elsif ( defined $ntp_info{'threshold_offset_warning'}
+    } elsif ( defined $ntp_info{'threshold_offset_warning'}
       && ( $ntp_info{'synced_offset'} >= $ntp_info{'threshold_offset_warning'} || $ntp_info{'synced_offset'} <= 0 - $ntp_info{'threshold_offset_warning'} ) )
     {
       if ( $ntp_check_status ne CRITICAL ) { $ntp_check_status = WARNING }
@@ -1300,8 +1251,7 @@ sub check_ntp {
     if ( defined $ntp_info{'threshold_jitter_critical'} && $ntp_info{'synced_jitter'} >= $ntp_info{'threshold_jitter_critical'} ) {
       $ntp_check_status = CRITICAL;
       $output_text .= ' (CRITCAL)';
-    }
-    elsif ( defined $ntp_info{'threshold_jitter_warning'} && $ntp_info{'synced_jitter'} >= $ntp_info{'threshold_jitter_warning'} ) {
+    } elsif ( defined $ntp_info{'threshold_jitter_warning'} && $ntp_info{'synced_jitter'} >= $ntp_info{'threshold_jitter_warning'} ) {
       if ( $ntp_check_status ne CRITICAL ) { $ntp_check_status = WARNING }
       $output_text .= ' (WARNING)';
     }
@@ -1312,8 +1262,7 @@ sub check_ntp {
     if ( defined $ntp_info{'threshold_stratum_critical'} && $ntp_info{'synced_stratum'} > $ntp_info{'threshold_stratum_critical'} ) {
       $ntp_check_status = CRITICAL;
       $output_text .= ' (CRITCAL)';
-    }
-    elsif ( defined $ntp_info{'threshold_stratum_warning'} && $ntp_info{'synced_stratum'} > $ntp_info{'threshold_stratum_warning'} ) {
+    } elsif ( defined $ntp_info{'threshold_stratum_warning'} && $ntp_info{'synced_stratum'} > $ntp_info{'threshold_stratum_warning'} ) {
       if ( $ntp_check_status ne CRITICAL ) { $ntp_check_status = WARNING }
       $output_text .= ' (WARNING)';
     }
@@ -1324,8 +1273,7 @@ sub check_ntp {
     if ( defined $ntp_info{'threshold_truechimers_critical'} && $ntp_info{'truechimers'} <= $ntp_info{'threshold_truechimers_critical'} ) {
       $ntp_check_status = CRITICAL;
       $output_text .= ' (CRITCAL)';
-    }
-    elsif ( defined $ntp_info{'threshold_truechimers_warning'} && $ntp_info{'truechimers'} <= $ntp_info{'threshold_truechimers_warning'} ) {
+    } elsif ( defined $ntp_info{'threshold_truechimers_warning'} && $ntp_info{'truechimers'} <= $ntp_info{'threshold_truechimers_warning'} ) {
       if ( $ntp_check_status ne CRITICAL ) { $ntp_check_status = WARNING }
       $output_text .= ' (WARNING)';
     }

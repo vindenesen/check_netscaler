@@ -6,3 +6,7 @@
 -vt=0    # Less vertical tightness
 -wn      # Weld nested containers
 -l=200   # 200 characters per line
+-cb      # Cuddle blocks
+-ce      # Cuddle else blocks
+-cbl     # Cuddle block list
+-nbbc    # No blanks before comments
