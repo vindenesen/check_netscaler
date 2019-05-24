@@ -390,7 +390,7 @@ http://NSIP/nitro-rest.tgz (where NSIP is the IP address of your NetScaler appli
 
 ## Tested Firmware
 
-Tested with NetScaler 10.5, 11.0, 11.1, 12.0 and 12.1. The plugin should work with all available firmware builds.
+Tested with NetScaler 10.5, 11.0, 11.1, 12.0, 12.1 and 13.0. The plugin should work with all available firmware builds.
 
 ## Automated Tests
 
