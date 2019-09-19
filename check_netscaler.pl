@@ -400,8 +400,13 @@ sub check_state {
   my $response = nitro_client( $plugin, \%params );
   $response = $response->{ $plugin->opts->objecttype };
 
+  # handle an empty response
   if ( !scalar($response) ) {
-    $plugin->nagios_exit( OK, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration' );
+    if ($params{'objectname'} && $params{'objectname'} ne '') {
+      $plugin->nagios_exit( CRITICAL, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration' );
+    } else {
+      $plugin->nagios_exit( OK, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration' );
+    }
   }
 
   # loop around, check states and increment the counters
