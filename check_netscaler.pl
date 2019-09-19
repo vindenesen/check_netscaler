@@ -403,9 +403,9 @@ sub check_state {
   # handle an empty response
   if ( !scalar($response) ) {
     if ($params{'objectname'} && $params{'objectname'} ne '') {
-      $plugin->nagios_exit( CRITICAL, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration' );
+      $plugin->plugin_exit( CRITICAL, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration' );
     } else {
-      $plugin->nagios_exit( OK, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration' );
+      $plugin->plugin_exit( OK, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration' );
     }
   }
 
@@ -456,7 +456,7 @@ sub check_state {
 
   my ( $code, $message ) = $plugin->check_messages;
 
-  $plugin->nagios_exit( $code, $plugin->opts->command . ' ' . $plugin->opts->objecttype . ': ' . $message );
+  $plugin->plugin_exit( $code, $plugin->opts->command . ' ' . $plugin->opts->objecttype . ': ' . $message );
 }
 
 sub check_keyword {
@@ -550,7 +550,7 @@ sub check_keyword {
   }
 
   my ( $code, $message ) = $plugin->check_messages( join => "; ", join_all => "; " );
-  $plugin->nagios_exit( $code, 'keyword ' . $type_of_string_comparison . ': ' . $message );
+  $plugin->plugin_exit( $code, 'keyword ' . $type_of_string_comparison . ': ' . $message );
 }
 
 sub check_sslcert {
@@ -586,9 +586,9 @@ sub check_sslcert {
   my ( $code, $message ) = $plugin->check_messages;
 
   if ( $code == OK ) {
-    $plugin->nagios_exit( $code, $plugin->opts->command . ': certificate lifetime OK' );
+    $plugin->plugin_exit( $code, $plugin->opts->command . ': certificate lifetime OK' );
   } else {
-    $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
+    $plugin->plugin_exit( $code, $plugin->opts->command . ': ' . $message );
   }
 }
 
@@ -610,7 +610,7 @@ sub check_staserver {
   $response = $response->{ $params{'objecttype'} };
 
   if ( !scalar($response) ) {
-    $plugin->nagios_exit( CRITICAL, $plugin->opts->command . ': no staserver found in configuration' );
+    $plugin->plugin_exit( CRITICAL, $plugin->opts->command . ': no staserver found in configuration' );
   }
 
   # return critical if all staservers are down at once
@@ -634,7 +634,7 @@ sub check_staserver {
 
   if ( $critical == 1 ) { $code = CRITICAL; }
 
-  $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $code, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_nsconfig {
@@ -650,9 +650,9 @@ sub check_nsconfig {
   $response = $response->{ $params{'objecttype'} };
 
   if ( !defined $response->{'configchanged'} || $response->{'configchanged'} ) {
-    $plugin->nagios_exit( WARNING, $plugin->opts->command . ': unsaved configuration changes' );
+    $plugin->plugin_exit( WARNING, $plugin->opts->command . ': unsaved configuration changes' );
   } else {
-    $plugin->nagios_exit( OK, $plugin->opts->command . ': no unsaved configuration changes' );
+    $plugin->plugin_exit( OK, $plugin->opts->command . ': no unsaved configuration changes' );
   }
 }
 
@@ -681,7 +681,7 @@ sub get_hardware_info {
   $plugin->add_message( OK, 'Build Version: ' . $response->{'version'} . ';' );
 
   my ( $code, $message ) = $plugin->check_messages;
-  $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $code, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_threshold_and_get_perfdata {
@@ -801,7 +801,7 @@ sub check_threshold_and_get_perfdata {
   }
 
   my ( $code, $message ) = $plugin->check_messages( join => "; ", join_all => "; " );
-  $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $code, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_interfaces {
@@ -875,7 +875,7 @@ sub check_interfaces {
   if ( scalar @interface_errors != 0 ) {
     $message = join( ', ', @interface_errors ) . ' - ' . $message;
   }
-  $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $code, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_servicegroup {
@@ -992,7 +992,7 @@ sub check_servicegroup {
   if ( scalar @servicegroup_errors != 0 ) {
     $message = join( ', ', @servicegroup_errors ) . ' - ' . $message;
   }
-  $plugin->nagios_exit( $servicegroup_state, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $servicegroup_state, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_license {
@@ -1044,7 +1044,7 @@ sub check_license {
   }
 
   my ( $code, $message ) = $plugin->check_messages;
-  $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $code, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_hastatus {
@@ -1060,7 +1060,7 @@ sub check_hastatus {
   $response = $response->{ $params{'objecttype'} };
 
   if ( $response->{'hacurstatus'} ne 'YES' ) {
-    $plugin->nagios_exit( CRITICAL, $plugin->opts->command . ': appliance is not configured for high availability' );
+    $plugin->plugin_exit( CRITICAL, $plugin->opts->command . ': appliance is not configured for high availability' );
   }
 
   my %hastatus;
@@ -1126,7 +1126,7 @@ sub check_hastatus {
   }
 
   my ( $code, $message ) = $plugin->check_messages;
-  $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $code, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_ntp {
@@ -1143,7 +1143,7 @@ sub check_ntp {
 
   # check if syncing is even enabled
   if ( $response->{'state'} ne "ENABLED" ) {
-    $plugin->nagios_exit( CRITICAL, $plugin->opts->command . ': Sync ' . $response->{'state'} );
+    $plugin->plugin_exit( CRITICAL, $plugin->opts->command . ': Sync ' . $response->{'state'} );
   }
 
   my @stripped;
@@ -1320,7 +1320,7 @@ sub check_ntp {
   }
 
   my ( $code, $message ) = $plugin->check_messages( join => ", ", join_all => ", " );
-  $plugin->nagios_exit( $ntp_check_status, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $ntp_check_status, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_debug {
