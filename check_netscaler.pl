@@ -326,6 +326,11 @@ sub nitro_client {
     $response = JSON->new->allow_blessed->convert_blessed->decode( $response->content );
   }
 
+  if ( $plugin->opts->verbose ) {
+    print "debug: decoded response of request is:\n";
+    print Dumper( $response );
+  }
+
   return $response;
 }
 
@@ -486,7 +491,15 @@ sub check_keyword {
   $params{'options'}    = $plugin->opts->urlopts;
 
   my $response = nitro_client( $plugin, \%params );
-  $response = $response->{ $plugin->opts->objecttype };
+
+  # handle and objecttype with an slash inside (e.g. nspartition/mypartition)
+  if ( $params{'objecttype'} =~ /\// ) {
+    my @objecttype_parts = split('/', $params{'objecttype'}, 2);
+    $response = $response->{ $objecttype_parts[0] }[0];
+  } else {
+    $response = $response->{ $params{'objecttype'} };
+  }
+
   if ( ref $response eq 'ARRAY' ) {
     foreach $response ( @{$response} ) {
       foreach my $objectname ( split( ',', $plugin->opts->objectname ) ) {
@@ -707,7 +720,14 @@ sub check_threshold_and_get_perfdata {
   }
 
   my $response = nitro_client( $plugin, \%params );
-  $response = $response->{ $params{'objecttype'} };
+
+  # handle and objecttype with an slash inside (e.g. nspartition/mypartition)
+  if ( $params{'objecttype'} =~ /\// ) {
+    my @objecttype_parts = split('/', $params{'objecttype'}, 2);
+    $response = $response->{ $objecttype_parts[0] }[0];
+  } else {
+    $response = $response->{ $params{'objecttype'} };
+  }
 
   if ( ref $response eq 'ARRAY' ) {
     foreach $response ( @{$response} ) {
