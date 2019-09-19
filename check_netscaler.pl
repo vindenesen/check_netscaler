@@ -735,7 +735,8 @@ sub check_threshold_and_get_perfdata {
       foreach my $origin_objectname ( split( ',', $plugin->opts->objectname ) ) {
 
         my $objectname;
-        my $objectname_id my $description;
+        my $objectname_id;
+        my $description;
 
         # handling of the dot notation for sdx appliances (see #33)
         if ( $plugin->opts->objectname =~ /\./ ) {
