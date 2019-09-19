@@ -1,3 +1,6 @@
+## current branch only
+- return OK in state check if no vservers are configured (#44)
+
 ## v1.5.1 (2018-06-10)
 - fixed minor typo, made matches/matches_not support matching in arrays
 - output for array matches more comprehensible (#33)

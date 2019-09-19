@@ -401,7 +401,7 @@ sub check_state {
   $response = $response->{ $plugin->opts->objecttype };
 
   if ( !scalar($response) ) {
-    $plugin->nagios_exit( CRITICAL, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration' );
+    $plugin->nagios_exit( OK, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration' );
   }
 
   # loop around, check states and increment the counters
