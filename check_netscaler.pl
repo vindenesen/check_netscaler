@@ -315,7 +315,7 @@ sub nitro_client {
 
   my $response = $lwp->request($request);
 
-  if ( $plugin->opts->verbose ) {
+  if ( $plugin->opts->verbose > 1 ) {
     print "debug: response of request is:\n";
     print Dumper( $response->content );
   }
@@ -326,8 +326,8 @@ sub nitro_client {
     $response = JSON->new->allow_blessed->convert_blessed->decode( $response->content );
   }
 
-  if ( $plugin->opts->verbose ) {
-    print "debug: decoded response of request is:\n";
+  if ( $plugin->opts->verbose > 2 ) {
+    print "debug: json decoded response of request is:\n";
     print Dumper($response);
   }
 
@@ -730,61 +730,54 @@ sub check_threshold_and_get_perfdata {
   }
 
   if ( ref $response eq 'ARRAY' ) {
+    my $response_id = 0;
     foreach $response ( @{$response} ) {
-      foreach my $objectname ( split( ',', $plugin->opts->objectname ) ) {
-        if ( not index( $objectname, '.' ) != -1 ) {
-          $plugin->plugin_die( $plugin->opts->command . ': return data is an array and contains multiple objects. You need te seperate id and name with a ".".' );
+      foreach my $origin_objectname ( split( ',', $plugin->opts->objectname ) ) {
+
+        my $objectname;
+        my $objectname_id my $description;
+
+        # handling of the dot notation for sdx appliances (see #33)
+        if ( $plugin->opts->objectname =~ /\./ ) {
+          ( $objectname_id, $objectname ) = split( /\./, $origin_objectname );
+
+          if ( not defined( $response->{$objectname_id} ) ) {
+            $plugin->nagios_die( $plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.' );
+          }
+
+          $description = $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname;
+        } else {
+          $objectname  = $origin_objectname;
+          $description = $params{'objecttype'} . '.' . $origin_objectname . '[' . $response_id . ']';
         }
 
-        my ( $objectname_id, $objectname_name ) = split /\./, $objectname;
-
-        if ( not defined( $response->{$objectname_id} ) ) {
-          $plugin->plugin_die( $plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.' );
-        }
-        if ( not defined( $response->{$objectname_name} ) ) {
-          $plugin->plugin_die( $plugin->opts->command . ': object name "' . $objectname_name . '" not found in output.' );
+        if ( not defined( $response->{$objectname} ) ) {
+          $plugin->plugin_die( $plugin->opts->command . ': object name "' . $objectname . '" not found in output.' );
         }
 
         # check thresholds
-        if ( defined $plugin->opts->critical && ( $direction eq 'above' && $response->{$objectname_name} >= $plugin->opts->critical )
-          || ( $direction eq 'below' && $response->{$objectname_name} <= $plugin->opts->critical ) )
+        if ( defined $plugin->opts->critical && ( $direction eq 'above' && $response->{$objectname} >= $plugin->opts->critical )
+          || ( $direction eq 'below' && $response->{$objectname} <= $plugin->opts->critical ) )
         {
-          $plugin->add_message( CRITICAL,
-                $params{'objecttype'} . '.'
-              . $response->{$objectname_id} . '.'
-              . $objectname_name . ' is '
-              . $direction
-              . ' threshold (current: '
-              . $response->{$objectname_name}
-              . ', critical: '
-              . $plugin->opts->critical
-              . ')' );
-        } elsif ( defined $plugin->opts->warning && ( $direction eq 'above' && $response->{$objectname_name} >= $plugin->opts->warning )
-          || ( $direction eq 'below' && $response->{$objectname_name} <= $plugin->opts->warning ) )
+          $plugin->add_message( CRITICAL, $description . ' is ' . $direction . ' threshold (current: ' . $response->{$objectname} . ', critical: ' . $plugin->opts->critical . ')' );
+        } elsif ( defined $plugin->opts->warning && ( $direction eq 'above' && $response->{$objectname} >= $plugin->opts->warning )
+          || ( $direction eq 'below' && $response->{$objectname} <= $plugin->opts->warning ) )
         {
-          $plugin->add_message( WARNING,
-                $params{'objecttype'} . '.'
-              . $response->{$objectname_id} . '.'
-              . $objectname_name . ' is '
-              . $direction
-              . ' threshold (current: '
-              . $response->{$objectname_name}
-              . ', warning: '
-              . $plugin->opts->warning
-              . ')' );
+          $plugin->add_message( WARNING, $description . ' is ' . $direction . ' threshold (current: ' . $response->{$objectname} . ', warning: ' . $plugin->opts->warning . ')' );
         } else {
-          $plugin->add_message( OK, $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . ': ' . $response->{$objectname_name} );
+          $plugin->add_message( OK, $description . ': ' . $response->{$objectname} );
         }
 
         $plugin->add_perfdata(
-          label    => "'" . $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . "'",
-          value    => $response->{$objectname_name},
+          label    => "'" . $description . "'",
+          value    => $response->{$objectname},
           min      => undef,
           max      => undef,
           warning  => $plugin->opts->warning,
           critical => $plugin->opts->critical,
         );
       }
+      $response_id++;
     }
   } elsif ( ref $response eq 'HASH' ) {
     foreach my $objectname ( split( ',', $plugin->opts->objectname ) ) {
