@@ -232,7 +232,7 @@ elsif ( $plugin->opts->command eq 'matches_not' || $plugin->opts->command eq 'st
 } else {
 
   # error, unkown command given
-  $plugin->nagios_die( 'unkown command ' . $plugin->opts->command . ' given' );
+  $plugin->plugin_die( 'unkown command ' . $plugin->opts->command . ' given' );
 }
 
 sub add_arg {
@@ -321,7 +321,7 @@ sub nitro_client {
   }
 
   if ( HTTP::Status::is_error( $response->code ) ) {
-    $plugin->nagios_die( $response->content );
+    $plugin->plugin_die( $response->content );
   } else {
     $response = JSON->new->allow_blessed->convert_blessed->decode( $response->content );
   }
@@ -333,7 +333,7 @@ sub check_state {
   my $plugin = shift;
 
   if ( !defined $plugin->opts->objecttype ) {
-    $plugin->nagios_die( $plugin->opts->command . ': command requires objecttype parameter' );
+    $plugin->plugin_die( $plugin->opts->command . ': command requires objecttype parameter' );
   }
 
   my %counter;
@@ -464,19 +464,19 @@ sub check_keyword {
   my $type_of_string_comparison = shift;
 
   if ( !defined $plugin->opts->objecttype ) {
-    $plugin->nagios_die( $plugin->opts->command . ': command requires parameter for objecttype' );
+    $plugin->plugin_die( $plugin->opts->command . ': command requires parameter for objecttype' );
   }
 
   if ( !defined $plugin->opts->objectname ) {
-    $plugin->nagios_die( $plugin->opts->command . ': command requires parameter for objectname' );
+    $plugin->plugin_die( $plugin->opts->command . ': command requires parameter for objectname' );
   }
 
   if ( !defined $plugin->opts->warning || !defined $plugin->opts->critical ) {
-    $plugin->nagios_die( $plugin->opts->command . ': command requires parameter for warning and critical' );
+    $plugin->plugin_die( $plugin->opts->command . ': command requires parameter for warning and critical' );
   }
 
   if ( $type_of_string_comparison ne 'matches' && $type_of_string_comparison ne 'matches not' ) {
-    $plugin->nagios_die( $plugin->opts->command . ': string can only be checked for "matches" and "matches not"' );
+    $plugin->plugin_die( $plugin->opts->command . ': string can only be checked for "matches" and "matches not"' );
   }
 
   my %params;
@@ -491,16 +491,16 @@ sub check_keyword {
     foreach $response ( @{$response} ) {
       foreach my $objectname ( split( ',', $plugin->opts->objectname ) ) {
         if ( not index( $objectname, '.' ) != -1 ) {
-          $plugin->nagios_die( $plugin->opts->command . ': return data is an array and contains multiple objects. You need te seperate id and name with a ".".' );
+          $plugin->plugin_die( $plugin->opts->command . ': return data is an array and contains multiple objects. You need te seperate id and name with a ".".' );
         }
 
         my ( $objectname_id, $objectname_name ) = split /\./, $objectname;
 
         if ( not defined( $response->{$objectname_id} ) ) {
-          $plugin->nagios_die( $plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.' );
+          $plugin->plugin_die( $plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.' );
         }
         if ( not defined( $response->{$objectname_name} ) ) {
-          $plugin->nagios_die( $plugin->opts->command . ': object name "' . $objectname_name . '" not found in output.' );
+          $plugin->plugin_die( $plugin->opts->command . ': object name "' . $objectname_name . '" not found in output.' );
         }
 
         if ( ( $type_of_string_comparison eq 'matches' && $response->{$objectname_name} eq $plugin->opts->critical )
@@ -546,7 +546,7 @@ sub check_keyword {
       }
     }
   } else {
-    $plugin->nagios_die( $plugin->opts->command . ': unable to parse data. Returned data is not a HASH or ARRAY!' );
+    $plugin->plugin_die( $plugin->opts->command . ': unable to parse data. Returned data is not a HASH or ARRAY!' );
   }
 
   my ( $code, $message ) = $plugin->check_messages( join => "; ", join_all => "; " );
@@ -695,15 +695,15 @@ sub check_threshold_and_get_perfdata {
   $params{'options'}    = $plugin->opts->urlopts;
 
   if ( !defined $plugin->opts->objecttype ) {
-    $plugin->nagios_die( $plugin->opts->command . ': command requires parameter for objecttype' );
+    $plugin->plugin_die( $plugin->opts->command . ': command requires parameter for objecttype' );
   }
 
   if ( !defined $plugin->opts->objectname ) {
-    $plugin->nagios_die( $plugin->opts->command . ': command requires parameter for objectname' );
+    $plugin->plugin_die( $plugin->opts->command . ': command requires parameter for objectname' );
   }
 
   if ( $direction ne 'above' && $direction ne 'below' ) {
-    $plugin->nagios_die( $plugin->opts->command . ': threshold can only be checked for "above" and "below"' );
+    $plugin->plugin_die( $plugin->opts->command . ': threshold can only be checked for "above" and "below"' );
   }
 
   my $response = nitro_client( $plugin, \%params );
@@ -713,16 +713,16 @@ sub check_threshold_and_get_perfdata {
     foreach $response ( @{$response} ) {
       foreach my $objectname ( split( ',', $plugin->opts->objectname ) ) {
         if ( not index( $objectname, '.' ) != -1 ) {
-          $plugin->nagios_die( $plugin->opts->command . ': return data is an array and contains multiple objects. You need te seperate id and name with a ".".' );
+          $plugin->plugin_die( $plugin->opts->command . ': return data is an array and contains multiple objects. You need te seperate id and name with a ".".' );
         }
 
         my ( $objectname_id, $objectname_name ) = split /\./, $objectname;
 
         if ( not defined( $response->{$objectname_id} ) ) {
-          $plugin->nagios_die( $plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.' );
+          $plugin->plugin_die( $plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.' );
         }
         if ( not defined( $response->{$objectname_name} ) ) {
-          $plugin->nagios_die( $plugin->opts->command . ': object name "' . $objectname_name . '" not found in output.' );
+          $plugin->plugin_die( $plugin->opts->command . ': object name "' . $objectname_name . '" not found in output.' );
         }
 
         # check thresholds
@@ -769,7 +769,7 @@ sub check_threshold_and_get_perfdata {
   } elsif ( ref $response eq 'HASH' ) {
     foreach my $objectname ( split( ',', $plugin->opts->objectname ) ) {
       if ( not defined( $response->{$objectname} ) ) {
-        $plugin->nagios_die( $plugin->opts->command . ': object name "' . $objectname . '" not found in output.' );
+        $plugin->plugin_die( $plugin->opts->command . ': object name "' . $objectname . '" not found in output.' );
       }
 
       # check thresholds
@@ -797,7 +797,7 @@ sub check_threshold_and_get_perfdata {
       );
     }
   } else {
-    $plugin->nagios_die( $plugin->opts->command . ': unable to parse data. Returned data is not a HASH or ARRAY!' );
+    $plugin->plugin_die( $plugin->opts->command . ': unable to parse data. Returned data is not a HASH or ARRAY!' );
   }
 
   my ( $code, $message ) = $plugin->check_messages( join => "; ", join_all => "; " );
@@ -895,7 +895,7 @@ sub check_servicegroup {
   $params{'options'}    = $plugin->opts->urlopts;
 
   if ( not defined( $plugin->opts->objectname ) ) {
-    $plugin->nagios_die( $plugin->opts->command . ': no object name "-n" set' );
+    $plugin->plugin_die( $plugin->opts->command . ': no object name "-n" set' );
   }
 
   my %healthy_servicegroup_states;
@@ -1004,11 +1004,11 @@ sub check_license {
   $params{'options'}    = $plugin->opts->urlopts;
 
   if ( !defined $plugin->opts->warning || !$plugin->opts->critical ) {
-    $plugin->nagios_die( $plugin->opts->command . ': command requires parameter for warning and critical' );
+    $plugin->plugin_die( $plugin->opts->command . ': command requires parameter for warning and critical' );
   }
 
   if ( !defined $plugin->opts->objectname ) {
-    $plugin->nagios_die( $plugin->opts->command . ': filename must be given as objectname via "-n"' );
+    $plugin->plugin_die( $plugin->opts->command . ': filename must be given as objectname via "-n"' );
   }
 
   my $response;
