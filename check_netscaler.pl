@@ -328,7 +328,7 @@ sub nitro_client {
 
   if ( $plugin->opts->verbose ) {
     print "debug: decoded response of request is:\n";
-    print Dumper( $response );
+    print Dumper($response);
   }
 
   return $response;
@@ -407,7 +407,7 @@ sub check_state {
 
   # handle an empty response
   if ( !scalar($response) ) {
-    if ($params{'objectname'} && $params{'objectname'} ne '') {
+    if ( $params{'objectname'} && $params{'objectname'} ne '' ) {
       $plugin->plugin_exit( CRITICAL, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration' );
     } else {
       $plugin->plugin_exit( OK, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration' );
@@ -494,7 +494,7 @@ sub check_keyword {
 
   # handle and objecttype with an slash inside (e.g. nspartition/mypartition)
   if ( $params{'objecttype'} =~ /\// ) {
-    my @objecttype_parts = split('/', $params{'objecttype'}, 2);
+    my @objecttype_parts = split( '/', $params{'objecttype'}, 2 );
     $response = $response->{ $objecttype_parts[0] }[0];
   } else {
     $response = $response->{ $params{'objecttype'} };
@@ -723,7 +723,7 @@ sub check_threshold_and_get_perfdata {
 
   # handle and objecttype with an slash inside (e.g. nspartition/mypartition)
   if ( $params{'objecttype'} =~ /\// ) {
-    my @objecttype_parts = split('/', $params{'objecttype'}, 2);
+    my @objecttype_parts = split( '/', $params{'objecttype'}, 2 );
     $response = $response->{ $objecttype_parts[0] }[0];
   } else {
     $response = $response->{ $params{'objecttype'} };
