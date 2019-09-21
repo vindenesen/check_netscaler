@@ -507,7 +507,7 @@ sub check_keyword {
           $plugin->plugin_die( $plugin->opts->command . ': return data is an array and contains multiple objects. You need te seperate id and name with a ".".' );
         }
 
-        my ( $objectname_id, $objectname_name ) = split /\./, $objectname;
+        my ( $objectname_id, $objectname_name ) = split( '.', $objectname );
 
         if ( not defined( $response->{$objectname_id} ) ) {
           $plugin->plugin_die( $plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.' );
@@ -740,7 +740,7 @@ sub check_threshold_and_get_perfdata {
 
         # handling of the dot notation for sdx appliances (see #33)
         if ( $plugin->opts->objectname =~ /\./ ) {
-          ( $objectname_id, $objectname ) = split( /\./, $origin_objectname );
+          ( $objectname_id, $objectname ) = split( '.', $origin_objectname );
 
           if ( not defined( $response->{$objectname_id} ) ) {
             $plugin->nagios_die( $plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.' );
@@ -1034,7 +1034,7 @@ sub check_license {
 
     $response = nitro_client( $plugin, \%params );
 
-    foreach ( split( /\n/, decode_base64( $response->{'systemfile'}[0]->{'filecontent'} ) ) ) {
+    foreach ( split( "\n", decode_base64( $response->{'systemfile'}[0]->{'filecontent'} ) ) ) {
       if ( $_ =~ /^INCREMENT .*/ ) {
         @stripped = split( ' ', $_ );
 
@@ -1187,7 +1187,7 @@ sub check_ntp {
   $response = nitro_client( $plugin, \%params );
   $response = $response->{ $params{'objecttype'} }->{'response'};
 
-  foreach ( split( /\n/, $response ) ) {
+  foreach ( split( "\n", $response ) ) {
     my $sync_status = substr( $_, 0, 1 );
 
     if ( $sync_status eq "=" ) {
@@ -1229,8 +1229,8 @@ sub check_ntp {
   } else {
 
     # get values for WARNING and CRITICAL
-    foreach ( split( /,/, $plugin->opts->warning ) ) {
-      my ( $warning_option, $warning_value ) = split( /=/, $_ );
+    foreach ( split( ',', $plugin->opts->warning ) ) {
+      my ( $warning_option, $warning_value ) = split( '=', $_ );
 
       if ( $warning_option eq "o" ) { $ntp_info{'threshold_offset_warning'} = sprintf( "%1.6f", $warning_value ); }
       if ( $warning_option eq "j" ) { $ntp_info{'threshold_jitter_warning'} = sprintf( "%1.3f", $warning_value ); }
@@ -1238,8 +1238,8 @@ sub check_ntp {
       if ( $warning_option eq "t" ) { $ntp_info{'threshold_truechimers_warning'} = $warning_value; }
     }
 
-    foreach ( split( /,/, $plugin->opts->critical ) ) {
-      my ( $critical_option, $critical_value ) = split( /=/, $_ );
+    foreach ( split( ',', $plugin->opts->critical ) ) {
+      my ( $critical_option, $critical_value ) = split( '=', $_ );
 
       if ( $critical_option eq "o" ) { $ntp_info{'threshold_offset_critical'} = sprintf( "%1.6f", $critical_value ); }
       if ( $critical_option eq "j" ) { $ntp_info{'threshold_jitter_critical'} = sprintf( "%1.3f", $critical_value ); }
