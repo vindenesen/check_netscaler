@@ -530,23 +530,11 @@ sub check_keyword {
         if ( ( $type_of_string_comparison eq 'matches' && $response->{$objectname} eq $plugin->opts->critical )
           || ( $type_of_string_comparison eq 'matches not' && $response->{$objectname} ne $plugin->opts->critical ) )
         {
-          $plugin->add_message( CRITICAL,
-                $description . ': "'
-              . $response->{$objectname} . '" '
-              . $type_of_string_comparison
-              . ' keyword "'
-              . $plugin->opts->critical
-              . '"' );
+          $plugin->add_message( CRITICAL, $description . ': "' . $response->{$objectname} . '" ' . $type_of_string_comparison . ' keyword "' . $plugin->opts->critical . '"' );
         } elsif ( ( $type_of_string_comparison eq 'matches' && $response->{$objectname} eq $plugin->opts->warning )
           || ( $type_of_string_comparison eq 'matches not' && $response->{$objectname} ne $plugin->opts->warning ) )
         {
-          $plugin->add_message( WARNING,
-                $description . ': "'
-              . $response->{$objectname} . '" '
-              . $type_of_string_comparison
-              . ' keyword "'
-              . $plugin->opts->warning
-              . '"' );
+          $plugin->add_message( WARNING, $description . ': "' . $response->{$objectname} . '" ' . $type_of_string_comparison . ' keyword "' . $plugin->opts->warning . '"' );
         } else {
           $plugin->add_message( OK, $description . ': "' . $response->{$objectname} . '"' );
         }
