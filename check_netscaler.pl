@@ -501,48 +501,56 @@ sub check_keyword {
   }
 
   if ( ref $response eq 'ARRAY' ) {
+    my $response_id = 0;
     foreach $response ( @{$response} ) {
-      foreach my $objectname ( split( ',', $plugin->opts->objectname ) ) {
-        if ( not index( $objectname, '.' ) != -1 ) {
-          $plugin->plugin_die( $plugin->opts->command . ': return data is an array and contains multiple objects. You need te seperate id and name with a ".".' );
+      foreach my $origin_objectname ( split( ',', $plugin->opts->objectname ) ) {
+
+        my $objectname;
+        my $objectname_id;
+        my $description;
+
+        # handling of the dot notation for sdx appliances (see #33)
+        if ( $plugin->opts->objectname =~ /\./ ) {
+          ( $objectname_id, $objectname ) = split( '.', $origin_objectname );
+
+          if ( not defined( $response->{$objectname_id} ) ) {
+            $plugin->nagios_die( $plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.' );
+          }
+
+          $description = $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname;
+        } else {
+          $objectname  = $origin_objectname;
+          $description = $params{'objecttype'} . '.' . $origin_objectname . '[' . $response_id . ']';
         }
 
-        my ( $objectname_id, $objectname_name ) = split( '.', $objectname );
-
-        if ( not defined( $response->{$objectname_id} ) ) {
-          $plugin->plugin_die( $plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.' );
-        }
-        if ( not defined( $response->{$objectname_name} ) ) {
-          $plugin->plugin_die( $plugin->opts->command . ': object name "' . $objectname_name . '" not found in output.' );
+        if ( not defined( $response->{$objectname} ) ) {
+          $plugin->plugin_die( $plugin->opts->command . ': object name "' . $objectname . '" not found in output.' );
         }
 
-        if ( ( $type_of_string_comparison eq 'matches' && $response->{$objectname_name} eq $plugin->opts->critical )
-          || ( $type_of_string_comparison eq 'matches not' && $response->{$objectname_name} ne $plugin->opts->critical ) )
+        if ( ( $type_of_string_comparison eq 'matches' && $response->{$objectname} eq $plugin->opts->critical )
+          || ( $type_of_string_comparison eq 'matches not' && $response->{$objectname} ne $plugin->opts->critical ) )
         {
           $plugin->add_message( CRITICAL,
-                $plugin->opts->objecttype . '.'
-              . $response->{$objectname_id} . '.'
-              . $objectname_name . ': "'
-              . $response->{$objectname_name} . '" '
+                $description . ': "'
+              . $response->{$objectname} . '" '
               . $type_of_string_comparison
               . ' keyword "'
               . $plugin->opts->critical
-              . '";' );
-        } elsif ( ( $type_of_string_comparison eq 'matches' && $response->{$objectname_name} eq $plugin->opts->warning )
-          || ( $type_of_string_comparison eq 'matches not' && $response->{$objectname_name} ne $plugin->opts->warning ) )
+              . '"' );
+        } elsif ( ( $type_of_string_comparison eq 'matches' && $response->{$objectname} eq $plugin->opts->warning )
+          || ( $type_of_string_comparison eq 'matches not' && $response->{$objectname} ne $plugin->opts->warning ) )
         {
           $plugin->add_message( WARNING,
-                $plugin->opts->objecttype . '.'
-              . $response->{$objectname_id} . '.'
-              . $objectname_name . ': "'
-              . $response->{$objectname_name} . '" '
+                $description . ': "'
+              . $response->{$objectname} . '" '
               . $type_of_string_comparison
               . ' keyword "'
               . $plugin->opts->warning
-              . '";' );
+              . '"' );
         } else {
-          $plugin->add_message( OK, $plugin->opts->objecttype . '.' . $response->{$objectname_id} . '.' . $objectname_name . ': ' . $response->{$objectname_name} . ';' );
+          $plugin->add_message( OK, $description . ': "' . $response->{$objectname} . '"' );
         }
+        $response_id++;
       }
     }
   } elsif ( ref $response eq 'HASH' ) {
