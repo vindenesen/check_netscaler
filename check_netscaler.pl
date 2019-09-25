@@ -232,7 +232,7 @@ elsif ( $plugin->opts->command eq 'matches_not' || $plugin->opts->command eq 'st
 } else {
 
   # error, unkown command given
-  $plugin->nagios_die( 'unkown command ' . $plugin->opts->command . ' given' );
+  $plugin->plugin_die( 'unkown command ' . $plugin->opts->command . ' given' );
 }
 
 sub add_arg {
@@ -315,15 +315,20 @@ sub nitro_client {
 
   my $response = $lwp->request($request);
 
-  if ( $plugin->opts->verbose ) {
+  if ( $plugin->opts->verbose > 1 ) {
     print "debug: response of request is:\n";
     print Dumper( $response->content );
   }
 
   if ( HTTP::Status::is_error( $response->code ) ) {
-    $plugin->nagios_die( $response->content );
+    $plugin->plugin_die( $response->content );
   } else {
     $response = JSON->new->allow_blessed->convert_blessed->decode( $response->content );
+  }
+
+  if ( $plugin->opts->verbose > 2 ) {
+    print "debug: json decoded response of request is:\n";
+    print Dumper($response);
   }
 
   return $response;
@@ -333,7 +338,7 @@ sub check_state {
   my $plugin = shift;
 
   if ( !defined $plugin->opts->objecttype ) {
-    $plugin->nagios_die( $plugin->opts->command . ': command requires objecttype parameter' );
+    $plugin->plugin_die( $plugin->opts->command . ': command requires objecttype parameter' );
   }
 
   my %counter;
@@ -400,8 +405,13 @@ sub check_state {
   my $response = nitro_client( $plugin, \%params );
   $response = $response->{ $plugin->opts->objecttype };
 
+  # handle an empty response
   if ( !scalar($response) ) {
-    $plugin->nagios_exit( CRITICAL, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration' );
+    if ( $params{'objectname'} && $params{'objectname'} ne '' ) {
+      $plugin->plugin_exit( CRITICAL, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration' );
+    } else {
+      $plugin->plugin_exit( OK, $plugin->opts->command . ': no ' . $plugin->opts->objecttype . ' found in configuration' );
+    }
   }
 
   # loop around, check states and increment the counters
@@ -451,7 +461,7 @@ sub check_state {
 
   my ( $code, $message ) = $plugin->check_messages;
 
-  $plugin->nagios_exit( $code, $plugin->opts->command . ' ' . $plugin->opts->objecttype . ': ' . $message );
+  $plugin->plugin_exit( $code, $plugin->opts->command . ' ' . $plugin->opts->objecttype . ': ' . $message );
 }
 
 sub check_keyword {
@@ -459,19 +469,19 @@ sub check_keyword {
   my $type_of_string_comparison = shift;
 
   if ( !defined $plugin->opts->objecttype ) {
-    $plugin->nagios_die( $plugin->opts->command . ': command requires parameter for objecttype' );
+    $plugin->plugin_die( $plugin->opts->command . ': command requires parameter for objecttype' );
   }
 
   if ( !defined $plugin->opts->objectname ) {
-    $plugin->nagios_die( $plugin->opts->command . ': command requires parameter for objectname' );
+    $plugin->plugin_die( $plugin->opts->command . ': command requires parameter for objectname' );
   }
 
   if ( !defined $plugin->opts->warning || !defined $plugin->opts->critical ) {
-    $plugin->nagios_die( $plugin->opts->command . ': command requires parameter for warning and critical' );
+    $plugin->plugin_die( $plugin->opts->command . ': command requires parameter for warning and critical' );
   }
 
   if ( $type_of_string_comparison ne 'matches' && $type_of_string_comparison ne 'matches not' ) {
-    $plugin->nagios_die( $plugin->opts->command . ': string can only be checked for "matches" and "matches not"' );
+    $plugin->plugin_die( $plugin->opts->command . ': string can only be checked for "matches" and "matches not"' );
   }
 
   my %params;
@@ -481,50 +491,54 @@ sub check_keyword {
   $params{'options'}    = $plugin->opts->urlopts;
 
   my $response = nitro_client( $plugin, \%params );
-  $response = $response->{ $plugin->opts->objecttype };
+
+  # handle and objecttype with an slash inside (e.g. nspartition/mypartition)
+  if ( $params{'objecttype'} =~ /\// ) {
+    my @objecttype_parts = split( '/', $params{'objecttype'}, 2 );
+    $response = $response->{ $objecttype_parts[0] }[0];
+  } else {
+    $response = $response->{ $params{'objecttype'} };
+  }
+
   if ( ref $response eq 'ARRAY' ) {
+    my $response_id = 0;
     foreach $response ( @{$response} ) {
-      foreach my $objectname ( split( ',', $plugin->opts->objectname ) ) {
-        if ( not index( $objectname, '.' ) != -1 ) {
-          $plugin->nagios_die( $plugin->opts->command . ': return data is an array and contains multiple objects. You need te seperate id and name with a ".".' );
-        }
+      foreach my $origin_objectname ( split( ',', $plugin->opts->objectname ) ) {
 
-        my ( $objectname_id, $objectname_name ) = split /\./, $objectname;
+        my $objectname;
+        my $objectname_id;
+        my $description;
 
-        if ( not defined( $response->{$objectname_id} ) ) {
-          $plugin->nagios_die( $plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.' );
-        }
-        if ( not defined( $response->{$objectname_name} ) ) {
-          $plugin->nagios_die( $plugin->opts->command . ': object name "' . $objectname_name . '" not found in output.' );
-        }
+        # handling of the dot notation for sdx appliances (see #33)
+        if ( $plugin->opts->objectname =~ /\./ ) {
+          ( $objectname_id, $objectname ) = split( '.', $origin_objectname );
 
-        if ( ( $type_of_string_comparison eq 'matches' && $response->{$objectname_name} eq $plugin->opts->critical )
-          || ( $type_of_string_comparison eq 'matches not' && $response->{$objectname_name} ne $plugin->opts->critical ) )
-        {
-          $plugin->add_message( CRITICAL,
-                $plugin->opts->objecttype . '.'
-              . $response->{$objectname_id} . '.'
-              . $objectname_name . ': "'
-              . $response->{$objectname_name} . '" '
-              . $type_of_string_comparison
-              . ' keyword "'
-              . $plugin->opts->critical
-              . '";' );
-        } elsif ( ( $type_of_string_comparison eq 'matches' && $response->{$objectname_name} eq $plugin->opts->warning )
-          || ( $type_of_string_comparison eq 'matches not' && $response->{$objectname_name} ne $plugin->opts->warning ) )
-        {
-          $plugin->add_message( WARNING,
-                $plugin->opts->objecttype . '.'
-              . $response->{$objectname_id} . '.'
-              . $objectname_name . ': "'
-              . $response->{$objectname_name} . '" '
-              . $type_of_string_comparison
-              . ' keyword "'
-              . $plugin->opts->warning
-              . '";' );
+          if ( not defined( $response->{$objectname_id} ) ) {
+            $plugin->nagios_die( $plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.' );
+          }
+
+          $description = $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname;
         } else {
-          $plugin->add_message( OK, $plugin->opts->objecttype . '.' . $response->{$objectname_id} . '.' . $objectname_name . ': ' . $response->{$objectname_name} . ';' );
+          $objectname  = $origin_objectname;
+          $description = $params{'objecttype'} . '.' . $origin_objectname . '[' . $response_id . ']';
         }
+
+        if ( not defined( $response->{$objectname} ) ) {
+          $plugin->plugin_die( $plugin->opts->command . ': object name "' . $objectname . '" not found in output.' );
+        }
+
+        if ( ( $type_of_string_comparison eq 'matches' && $response->{$objectname} eq $plugin->opts->critical )
+          || ( $type_of_string_comparison eq 'matches not' && $response->{$objectname} ne $plugin->opts->critical ) )
+        {
+          $plugin->add_message( CRITICAL, $description . ': "' . $response->{$objectname} . '" ' . $type_of_string_comparison . ' keyword "' . $plugin->opts->critical . '"' );
+        } elsif ( ( $type_of_string_comparison eq 'matches' && $response->{$objectname} eq $plugin->opts->warning )
+          || ( $type_of_string_comparison eq 'matches not' && $response->{$objectname} ne $plugin->opts->warning ) )
+        {
+          $plugin->add_message( WARNING, $description . ': "' . $response->{$objectname} . '" ' . $type_of_string_comparison . ' keyword "' . $plugin->opts->warning . '"' );
+        } else {
+          $plugin->add_message( OK, $description . ': "' . $response->{$objectname} . '"' );
+        }
+        $response_id++;
       }
     }
   } elsif ( ref $response eq 'HASH' ) {
@@ -541,11 +555,11 @@ sub check_keyword {
       }
     }
   } else {
-    $plugin->nagios_die( $plugin->opts->command . ': unable to parse data. Returned data is not a HASH or ARRAY!' );
+    $plugin->plugin_die( $plugin->opts->command . ': unable to parse data. Returned data is not a HASH or ARRAY!' );
   }
 
   my ( $code, $message ) = $plugin->check_messages( join => "; ", join_all => "; " );
-  $plugin->nagios_exit( $code, 'keyword ' . $type_of_string_comparison . ': ' . $message );
+  $plugin->plugin_exit( $code, 'keyword ' . $type_of_string_comparison . ': ' . $message );
 }
 
 sub check_sslcert {
@@ -581,9 +595,9 @@ sub check_sslcert {
   my ( $code, $message ) = $plugin->check_messages;
 
   if ( $code == OK ) {
-    $plugin->nagios_exit( $code, $plugin->opts->command . ': certificate lifetime OK' );
+    $plugin->plugin_exit( $code, $plugin->opts->command . ': certificate lifetime OK' );
   } else {
-    $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
+    $plugin->plugin_exit( $code, $plugin->opts->command . ': ' . $message );
   }
 }
 
@@ -605,7 +619,7 @@ sub check_staserver {
   $response = $response->{ $params{'objecttype'} };
 
   if ( !scalar($response) ) {
-    $plugin->nagios_exit( CRITICAL, $plugin->opts->command . ': no staserver found in configuration' );
+    $plugin->plugin_exit( CRITICAL, $plugin->opts->command . ': no staserver found in configuration' );
   }
 
   # return critical if all staservers are down at once
@@ -629,7 +643,7 @@ sub check_staserver {
 
   if ( $critical == 1 ) { $code = CRITICAL; }
 
-  $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $code, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_nsconfig {
@@ -645,9 +659,9 @@ sub check_nsconfig {
   $response = $response->{ $params{'objecttype'} };
 
   if ( !defined $response->{'configchanged'} || $response->{'configchanged'} ) {
-    $plugin->nagios_exit( WARNING, $plugin->opts->command . ': unsaved configuration changes' );
+    $plugin->plugin_exit( WARNING, $plugin->opts->command . ': unsaved configuration changes' );
   } else {
-    $plugin->nagios_exit( OK, $plugin->opts->command . ': no unsaved configuration changes' );
+    $plugin->plugin_exit( OK, $plugin->opts->command . ': no unsaved configuration changes' );
   }
 }
 
@@ -676,7 +690,7 @@ sub get_hardware_info {
   $plugin->add_message( OK, 'Build Version: ' . $response->{'version'} . ';' );
 
   my ( $code, $message ) = $plugin->check_messages;
-  $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $code, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_threshold_and_get_perfdata {
@@ -690,81 +704,82 @@ sub check_threshold_and_get_perfdata {
   $params{'options'}    = $plugin->opts->urlopts;
 
   if ( !defined $plugin->opts->objecttype ) {
-    $plugin->nagios_die( $plugin->opts->command . ': command requires parameter for objecttype' );
+    $plugin->plugin_die( $plugin->opts->command . ': command requires parameter for objecttype' );
   }
 
   if ( !defined $plugin->opts->objectname ) {
-    $plugin->nagios_die( $plugin->opts->command . ': command requires parameter for objectname' );
+    $plugin->plugin_die( $plugin->opts->command . ': command requires parameter for objectname' );
   }
 
   if ( $direction ne 'above' && $direction ne 'below' ) {
-    $plugin->nagios_die( $plugin->opts->command . ': threshold can only be checked for "above" and "below"' );
+    $plugin->plugin_die( $plugin->opts->command . ': threshold can only be checked for "above" and "below"' );
   }
 
   my $response = nitro_client( $plugin, \%params );
-  $response = $response->{ $params{'objecttype'} };
+
+  # handle and objecttype with an slash inside (e.g. nspartition/mypartition)
+  if ( $params{'objecttype'} =~ /\// ) {
+    my @objecttype_parts = split( '/', $params{'objecttype'}, 2 );
+    $response = $response->{ $objecttype_parts[0] }[0];
+  } else {
+    $response = $response->{ $params{'objecttype'} };
+  }
 
   if ( ref $response eq 'ARRAY' ) {
+    my $response_id = 0;
     foreach $response ( @{$response} ) {
-      foreach my $objectname ( split( ',', $plugin->opts->objectname ) ) {
-        if ( not index( $objectname, '.' ) != -1 ) {
-          $plugin->nagios_die( $plugin->opts->command . ': return data is an array and contains multiple objects. You need te seperate id and name with a ".".' );
+      foreach my $origin_objectname ( split( ',', $plugin->opts->objectname ) ) {
+
+        my $objectname;
+        my $objectname_id;
+        my $description;
+
+        # handling of the dot notation for sdx appliances (see #33)
+        if ( $plugin->opts->objectname =~ /\./ ) {
+          ( $objectname_id, $objectname ) = split( '.', $origin_objectname );
+
+          if ( not defined( $response->{$objectname_id} ) ) {
+            $plugin->nagios_die( $plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.' );
+          }
+
+          $description = $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname;
+        } else {
+          $objectname  = $origin_objectname;
+          $description = $params{'objecttype'} . '.' . $origin_objectname . '[' . $response_id . ']';
         }
 
-        my ( $objectname_id, $objectname_name ) = split /\./, $objectname;
-
-        if ( not defined( $response->{$objectname_id} ) ) {
-          $plugin->nagios_die( $plugin->opts->command . ': object id "' . $objectname_id . '" not found in output.' );
-        }
-        if ( not defined( $response->{$objectname_name} ) ) {
-          $plugin->nagios_die( $plugin->opts->command . ': object name "' . $objectname_name . '" not found in output.' );
+        if ( not defined( $response->{$objectname} ) ) {
+          $plugin->plugin_die( $plugin->opts->command . ': object name "' . $objectname . '" not found in output.' );
         }
 
         # check thresholds
-        if ( defined $plugin->opts->critical && ( $direction eq 'above' && $response->{$objectname_name} >= $plugin->opts->critical )
-          || ( $direction eq 'below' && $response->{$objectname_name} <= $plugin->opts->critical ) )
+        if ( defined $plugin->opts->critical && ( $direction eq 'above' && $response->{$objectname} >= $plugin->opts->critical )
+          || ( $direction eq 'below' && $response->{$objectname} <= $plugin->opts->critical ) )
         {
-          $plugin->add_message( CRITICAL,
-                $params{'objecttype'} . '.'
-              . $response->{$objectname_id} . '.'
-              . $objectname_name . ' is '
-              . $direction
-              . ' threshold (current: '
-              . $response->{$objectname_name}
-              . ', critical: '
-              . $plugin->opts->critical
-              . ')' );
-        } elsif ( defined $plugin->opts->warning && ( $direction eq 'above' && $response->{$objectname_name} >= $plugin->opts->warning )
-          || ( $direction eq 'below' && $response->{$objectname_name} <= $plugin->opts->warning ) )
+          $plugin->add_message( CRITICAL, $description . ' is ' . $direction . ' threshold (current: ' . $response->{$objectname} . ', critical: ' . $plugin->opts->critical . ')' );
+        } elsif ( defined $plugin->opts->warning && ( $direction eq 'above' && $response->{$objectname} >= $plugin->opts->warning )
+          || ( $direction eq 'below' && $response->{$objectname} <= $plugin->opts->warning ) )
         {
-          $plugin->add_message( WARNING,
-                $params{'objecttype'} . '.'
-              . $response->{$objectname_id} . '.'
-              . $objectname_name . ' is '
-              . $direction
-              . ' threshold (current: '
-              . $response->{$objectname_name}
-              . ', warning: '
-              . $plugin->opts->warning
-              . ')' );
+          $plugin->add_message( WARNING, $description . ' is ' . $direction . ' threshold (current: ' . $response->{$objectname} . ', warning: ' . $plugin->opts->warning . ')' );
         } else {
-          $plugin->add_message( OK, $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . ': ' . $response->{$objectname_name} );
+          $plugin->add_message( OK, $description . ': ' . $response->{$objectname} );
         }
 
         $plugin->add_perfdata(
-          label    => "'" . $params{'objecttype'} . '.' . $response->{$objectname_id} . '.' . $objectname_name . "'",
-          value    => $response->{$objectname_name},
+          label    => "'" . $description . "'",
+          value    => $response->{$objectname},
           min      => undef,
           max      => undef,
           warning  => $plugin->opts->warning,
           critical => $plugin->opts->critical,
         );
       }
+      $response_id++;
     }
   } elsif ( ref $response eq 'HASH' ) {
     foreach my $objectname ( split( ',', $plugin->opts->objectname ) ) {
       if ( not defined( $response->{$objectname} ) ) {
-        $plugin->nagios_die( $plugin->opts->command . ': object name "' . $objectname . '" not found in output.' );
+        $plugin->plugin_die( $plugin->opts->command . ': object name "' . $objectname . '" not found in output.' );
       }
 
       # check thresholds
@@ -792,11 +807,11 @@ sub check_threshold_and_get_perfdata {
       );
     }
   } else {
-    $plugin->nagios_die( $plugin->opts->command . ': unable to parse data. Returned data is not a HASH or ARRAY!' );
+    $plugin->plugin_die( $plugin->opts->command . ': unable to parse data. Returned data is not a HASH or ARRAY!' );
   }
 
   my ( $code, $message ) = $plugin->check_messages( join => "; ", join_all => "; " );
-  $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $code, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_interfaces {
@@ -870,7 +885,7 @@ sub check_interfaces {
   if ( scalar @interface_errors != 0 ) {
     $message = join( ', ', @interface_errors ) . ' - ' . $message;
   }
-  $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $code, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_servicegroup {
@@ -890,7 +905,7 @@ sub check_servicegroup {
   $params{'options'}    = $plugin->opts->urlopts;
 
   if ( not defined( $plugin->opts->objectname ) ) {
-    $plugin->nagios_die( $plugin->opts->command . ': no object name "-n" set' );
+    $plugin->plugin_die( $plugin->opts->command . ': no object name "-n" set' );
   }
 
   my %healthy_servicegroup_states;
@@ -987,7 +1002,7 @@ sub check_servicegroup {
   if ( scalar @servicegroup_errors != 0 ) {
     $message = join( ', ', @servicegroup_errors ) . ' - ' . $message;
   }
-  $plugin->nagios_exit( $servicegroup_state, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $servicegroup_state, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_license {
@@ -999,11 +1014,11 @@ sub check_license {
   $params{'options'}    = $plugin->opts->urlopts;
 
   if ( !defined $plugin->opts->warning || !$plugin->opts->critical ) {
-    $plugin->nagios_die( $plugin->opts->command . ': command requires parameter for warning and critical' );
+    $plugin->plugin_die( $plugin->opts->command . ': command requires parameter for warning and critical' );
   }
 
   if ( !defined $plugin->opts->objectname ) {
-    $plugin->nagios_die( $plugin->opts->command . ': filename must be given as objectname via "-n"' );
+    $plugin->plugin_die( $plugin->opts->command . ': filename must be given as objectname via "-n"' );
   }
 
   my $response;
@@ -1015,7 +1030,7 @@ sub check_license {
 
     $response = nitro_client( $plugin, \%params );
 
-    foreach ( split( /\n/, decode_base64( $response->{'systemfile'}[0]->{'filecontent'} ) ) ) {
+    foreach ( split( "\n", decode_base64( $response->{'systemfile'}[0]->{'filecontent'} ) ) ) {
       if ( $_ =~ /^INCREMENT .*/ ) {
         @stripped = split( ' ', $_ );
 
@@ -1039,7 +1054,7 @@ sub check_license {
   }
 
   my ( $code, $message ) = $plugin->check_messages;
-  $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $code, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_hastatus {
@@ -1055,7 +1070,7 @@ sub check_hastatus {
   $response = $response->{ $params{'objecttype'} };
 
   if ( $response->{'hacurstatus'} ne 'YES' ) {
-    $plugin->nagios_exit( CRITICAL, $plugin->opts->command . ': appliance is not configured for high availability' );
+    $plugin->plugin_exit( CRITICAL, $plugin->opts->command . ': appliance is not configured for high availability' );
   }
 
   my %hastatus;
@@ -1121,7 +1136,7 @@ sub check_hastatus {
   }
 
   my ( $code, $message ) = $plugin->check_messages;
-  $plugin->nagios_exit( $code, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $code, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_ntp {
@@ -1138,7 +1153,7 @@ sub check_ntp {
 
   # check if syncing is even enabled
   if ( $response->{'state'} ne "ENABLED" ) {
-    $plugin->nagios_exit( CRITICAL, $plugin->opts->command . ': Sync ' . $response->{'state'} );
+    $plugin->plugin_exit( CRITICAL, $plugin->opts->command . ': Sync ' . $response->{'state'} );
   }
 
   my @stripped;
@@ -1168,7 +1183,7 @@ sub check_ntp {
   $response = nitro_client( $plugin, \%params );
   $response = $response->{ $params{'objecttype'} }->{'response'};
 
-  foreach ( split( /\n/, $response ) ) {
+  foreach ( split( "\n", $response ) ) {
     my $sync_status = substr( $_, 0, 1 );
 
     if ( $sync_status eq "=" ) {
@@ -1210,8 +1225,8 @@ sub check_ntp {
   } else {
 
     # get values for WARNING and CRITICAL
-    foreach ( split( /,/, $plugin->opts->warning ) ) {
-      my ( $warning_option, $warning_value ) = split( /=/, $_ );
+    foreach ( split( ',', $plugin->opts->warning ) ) {
+      my ( $warning_option, $warning_value ) = split( '=', $_ );
 
       if ( $warning_option eq "o" ) { $ntp_info{'threshold_offset_warning'} = sprintf( "%1.6f", $warning_value ); }
       if ( $warning_option eq "j" ) { $ntp_info{'threshold_jitter_warning'} = sprintf( "%1.3f", $warning_value ); }
@@ -1219,8 +1234,8 @@ sub check_ntp {
       if ( $warning_option eq "t" ) { $ntp_info{'threshold_truechimers_warning'} = $warning_value; }
     }
 
-    foreach ( split( /,/, $plugin->opts->critical ) ) {
-      my ( $critical_option, $critical_value ) = split( /=/, $_ );
+    foreach ( split( ',', $plugin->opts->critical ) ) {
+      my ( $critical_option, $critical_value ) = split( '=', $_ );
 
       if ( $critical_option eq "o" ) { $ntp_info{'threshold_offset_critical'} = sprintf( "%1.6f", $critical_value ); }
       if ( $critical_option eq "j" ) { $ntp_info{'threshold_jitter_critical'} = sprintf( "%1.3f", $critical_value ); }
@@ -1315,7 +1330,7 @@ sub check_ntp {
   }
 
   my ( $code, $message ) = $plugin->check_messages( join => ", ", join_all => ", " );
-  $plugin->nagios_exit( $ntp_check_status, $plugin->opts->command . ': ' . $message );
+  $plugin->plugin_exit( $ntp_check_status, $plugin->opts->command . ': ' . $message );
 }
 
 sub check_debug {
