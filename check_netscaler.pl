@@ -1017,15 +1017,20 @@ sub check_license {
     $plugin->plugin_die( $plugin->opts->command . ': command requires parameter for warning and critical' );
   }
 
-  if ( !defined $plugin->opts->objectname ) {
-    $plugin->plugin_die( $plugin->opts->command . ': filename must be given as objectname via "-n"' );
-  }
-
   my $response;
   my @stripped;
   my $timepiece;
+  my $licfiles;
 
-  foreach ( split( ',', $plugin->opts->objectname ) ) {
+  if ( !defined $plugin->opts->objectname ) {
+    $params{'options'} = 'args=filelocation:' . uri_escape('/nsconfig/license');
+    $response          = nitro_client( $plugin, \%params );
+    $licfiles          = join( ",", map { $_->{'filename'} } grep { $_->{'filename'} =~ m/\.lic$/ } @{ $response->{'systemfile'} } );
+  } else {
+    $licfiles = $plugin->opts->objectname;
+  }
+
+  foreach ( split( ',', $licfiles ) ) {
     $params{'options'} = 'args=filelocation:' . uri_escape('/nsconfig/license') . ',filename:' . uri_escape($_);
 
     $response = nitro_client( $plugin, \%params );
@@ -1228,8 +1233,8 @@ sub check_ntp {
     foreach ( split( ',', $plugin->opts->warning ) ) {
       my ( $warning_option, $warning_value ) = split( '=', $_ );
 
-      if ( $warning_option eq "o" ) { $ntp_info{'threshold_offset_warning'} = sprintf( "%1.6f", $warning_value ); }
-      if ( $warning_option eq "j" ) { $ntp_info{'threshold_jitter_warning'} = sprintf( "%1.3f", $warning_value ); }
+      if ( $warning_option eq "o" ) { $ntp_info{'threshold_offset_warning'}      = sprintf( "%1.6f", $warning_value ); }
+      if ( $warning_option eq "j" ) { $ntp_info{'threshold_jitter_warning'}      = sprintf( "%1.3f", $warning_value ); }
       if ( $warning_option eq "s" ) { $ntp_info{'threshold_stratum_warning'}     = $warning_value; }
       if ( $warning_option eq "t" ) { $ntp_info{'threshold_truechimers_warning'} = $warning_value; }
     }
@@ -1237,8 +1242,8 @@ sub check_ntp {
     foreach ( split( ',', $plugin->opts->critical ) ) {
       my ( $critical_option, $critical_value ) = split( '=', $_ );
 
-      if ( $critical_option eq "o" ) { $ntp_info{'threshold_offset_critical'} = sprintf( "%1.6f", $critical_value ); }
-      if ( $critical_option eq "j" ) { $ntp_info{'threshold_jitter_critical'} = sprintf( "%1.3f", $critical_value ); }
+      if ( $critical_option eq "o" ) { $ntp_info{'threshold_offset_critical'}      = sprintf( "%1.6f", $critical_value ); }
+      if ( $critical_option eq "j" ) { $ntp_info{'threshold_jitter_critical'}      = sprintf( "%1.3f", $critical_value ); }
       if ( $critical_option eq "s" ) { $ntp_info{'threshold_stratum_critical'}     = $critical_value; }
       if ( $critical_option eq "t" ) { $ntp_info{'threshold_truechimers_critical'} = $critical_value; }
     }
