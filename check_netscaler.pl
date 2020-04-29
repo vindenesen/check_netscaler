@@ -659,7 +659,7 @@ sub check_nsconfig {
   $response = $response->{ $params{'objecttype'} };
 
   if ( !defined $response->{'configchanged'} || $response->{'configchanged'} ) {
-    $plugin->plugin_exit( WARNING, $plugin->opts->command . ': unsaved configuration changes' );
+    $plugin->plugin_exit( CRITICAL, $plugin->opts->command . ': unsaved configuration changes' );
   } else {
     $plugin->plugin_exit( OK, $plugin->opts->command . ': no unsaved configuration changes' );
   }
